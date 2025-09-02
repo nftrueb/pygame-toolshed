@@ -30,6 +30,9 @@ class FontSpriteWriter:
 		for key, value in self.font.items(): 
 			s += f'{key}: {value} |'
 		return s 
+	
+	def get_size(self, text): 
+		return (len(text) * self.sprite_w, self.sprite_h)
 
 
 	def render(self, surf: pg.Surface, dialogue: Dialogue): 
