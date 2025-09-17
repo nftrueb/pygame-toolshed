@@ -114,3 +114,29 @@ class UI:
         if new_node.bounds.y < node.bounds.y: 
             node.bounds.h = node.bounds.y - new_node.bounds.y + node.bounds.h
             node.bounds.y = new_node.bounds.y
+
+class SceneManager: 
+    def __init__(self): 
+        self.scene_to_ui = {}
+        self.current_scene = None
+
+    def insert(self, scene_name, ui): 
+        self.scene_to_ui[scene_name] = copy(ui)
+        if len(self.scene_to_ui.keys()) == 1: 
+            self.current_scene = scene_name
+
+    def draw(self, frame): 
+        self.validate_scene()
+        self.scene_to_ui[self.current_scene].draw(frame) 
+
+    def get_node(self, mouse_pos): 
+        self.validate_scene()
+        return self.scene_to_ui[self.current_scene].get_node(mouse_pos)
+    
+    def clear_node_state(self): 
+        self.validate_scene()
+        for node in self.scene_to_ui[self.current_scene].root.children: 
+            node.filled = False
+
+    def validate_scene(self): 
+        assert self.current_scene in self.scene_to_ui
