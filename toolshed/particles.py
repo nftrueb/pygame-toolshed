@@ -1,3 +1,6 @@
+from typing import Tuple
+from dataclasses import dataclass
+
 import pygame as pg 
 
 from .vector import Vector
@@ -23,15 +26,14 @@ class ParticleManager:
         self.particles = []
 
 
+@dataclass
 class Particle: 
-    # ID is used to tie particle to some kind of object 
-    id = None 
-
-    def __init__(self, pos: Vector, vel: Vector, timer: int): 
-        self.pos = pos 
-        self.vel = vel
-        self.timer = timer
-        self.alive = True 
+    pos: Vector 
+    vel: Vector
+    timer: int 
+    id: int | None = None
+    color: Tuple[int] = (0,0,0)
+    alive: bool = True
 
     def __repr__(self): 
         return f'Particle(pos=({self.pos.x, self.pos.y})  alive={self.alive})'
@@ -51,35 +53,33 @@ class Particle:
     def kill(self): 
         self.alive = False 
 
-
+@dataclass
 class RectParticle(Particle): 
-    def __init__(self, dim: Vector, pos: Vector, vel: Vector, timer: int): 
-        super().__init__(pos, vel, timer) 
-        self.dim = dim 
+    dim: Vector = None
 
     def draw(self, surf): 
         x, y = self.pos.unpack()
         w, h = self.dim.unpack()
         r = pg.Rect(x, y, w, h)
-        pg.draw.rect(surf, (0,0,0), r)
+        pg.draw.rect(surf, self.color, r)
 
-
+@dataclass
 class CircParticle(Particle): 
-    def __init__(self, rad: float, pos: Vector, vel: Vector, timer: int): 
-        super().__init__(pos, vel, timer) 
-        self.rad = rad 
+    rad: int = 3
 
     def draw(self, surf): 
-        pg.draw.circle(surf, (0,0,0), self.pos.unpack(), self.rad) 
+        pg.draw.circle(surf, self.color, self.pos.unpack(), self.rad) 
 
+@dataclass
 class CircGravityParticle(CircParticle): 
     def update(self):
         super().update()
         self.vel.y += .1
 
+@dataclass
 class PulseParticle(CircParticle): 
     def draw(self, surf): 
-        pg.draw.circle(surf, (0,0,0), self.pos.unpack(), self.rad, width=1) 
+        pg.draw.circle(surf, self.color, self.pos.unpack(), self.rad, width=1) 
 
     def update(self):
         super().update()
