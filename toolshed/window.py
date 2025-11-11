@@ -10,7 +10,7 @@ class EventContext:
     mouse_pos: Tuple[float, float] = (0,0)
 
 class PygameContext: 
-    def __init__(self, base_dims, icon=None): 
+    def __init__(self, base_dims, icon_path=None): 
         pg.init()
 
         # record the base dimensions as separate vars 
@@ -24,18 +24,21 @@ class PygameContext:
 
         # instantiate screen object 
         self.screen = pg.display.set_mode(self.scaled_dims, pg.RESIZABLE)
-        self.frame = pg.Surface(self.screen.get_size())
+        self.frame = pg.Surface(base_dims)
         self.clock = pg.Clock() 
 
-        if icon is not None: 
+        if icon_path is not None: 
             icon_surf = None
             try: 
-                icon_surf = pg.image.load(icon)
+                icon_surf = pg.image.load(icon_path)
             except: 
-                print(f'[ INFO ] Failed to load icon image at path: {icon}')
+                print(f'[ INFO ] Failed to load icon image at path: {icon_path}')
             
             if icon_surf is not None:
-                pg.display.set_icon(pg.image.load(icon))
+                pg.display.set_icon(icon_surf)
+
+    def quit(self): 
+        pg.quit()
 
     def finish_drawing_frame(self): 
         scaled_frame = pg.transform.scale(self.frame, self.scaled_dims)
