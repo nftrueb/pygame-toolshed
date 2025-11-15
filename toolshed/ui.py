@@ -36,14 +36,14 @@ class Node:
 
     def hover(self): 
         if self.hoverable and not self.hovered and self.active: 
-            self.hovered = True
-            pg.mouse.set_cursor(pg.SYSTEM_CURSOR_HAND)
+            self.hovered = True 
 
             if self.sound: 
                 self.sound.play()
 
-        if isinstance(self, TextFieldNode): 
-            pg.mouse.set_cursor(pg.SYSTEM_CURSOR_IBEAM)
+            return True 
+        return False
+
     
 @dataclass
 class ImgNode(Node): 
@@ -331,15 +331,15 @@ class PopoutNode(Node):
             pg.draw.rect(surf, self.panel_border_color.val, self.panel_bounds, self.panel_width)
 
         # draw hover highlight
-        for idx, node in enumerate(self.nodes): 
-            if node.hovered: 
-                rect = pg.Rect(
-                    self.panel_bounds.x + self.panel_buffer + self.panel_width, 
-                    self.panel_bounds.y + self.panel_buffer + self.panel_width + (self.panel_bounds.h // len(self.nodes)) * idx, 
-                    self.panel_bounds.w - self.panel_buffer*2 - self.panel_width*2, 
-                    (self.panel_bounds.h - self.panel_buffer*2 - self.panel_width*2) // len(self.nodes)
-                )
-                pg.draw.rect(surf, self.hover_color.val, rect)
+        # for idx, node in enumerate(self.nodes): 
+        #     if node.hovered: 
+        #         rect = pg.Rect(
+        #             self.panel_bounds.x + self.panel_buffer + self.panel_width, 
+        #             self.panel_bounds.y + self.panel_buffer + self.panel_width + ((self.panel_bounds.h-self.panel_buffer*2-self.panel_width) // len(self.nodes)) * idx, 
+        #             self.panel_bounds.w - self.panel_buffer*2 - self.panel_width*2, 
+        #             (self.panel_bounds.h - self.panel_buffer*2 - self.panel_width*2) // len(self.nodes)
+        #         )
+        #         pg.draw.rect(surf, self.hover_color.val, rect)
 
     def toggle_expand(self): 
         self.expanded = not self.expanded
@@ -518,18 +518,19 @@ class SceneManager:
     def __init__(self): 
         self.scene_to_ui = {}
         self.current_scene = None
+        self.current_hovered: str = ''
 
-    def insert(self, scene_name, ui): 
+    def insert(self, scene_name: str, ui: UI): 
         self.scene_to_ui[scene_name] = copy(ui)
         if len(self.scene_to_ui.keys()) == 1: 
             self.current_scene = scene_name
 
-    def draw(self, frame): 
+    def draw(self, frame: pg.Surface): 
         if self.current_scene == None: 
             return 
         self.scene_to_ui[self.current_scene].draw(frame) 
 
-    def change_scene(self, new_scene, mouse_pos): 
+    def change_scene(self, new_scene: str, mouse_pos: Tuple[float]): 
         # change scene
         self.current_scene = new_scene
 
@@ -547,18 +548,32 @@ class SceneManager:
         # collapse popout
         self.close_popout_nodes()
 
+        self.current_hovered = ''
+
     def get_node(self, mouse_pos): 
         if self.current_scene == None: 
             return 
         return self.scene_to_ui[self.current_scene].get_node(mouse_pos)
     
-    def get_node_by_tag(self, tag): 
+    def get_node_by_tag(self, tag, all_uis=False): 
+        # either search all UIs or only active UI
+        if all_uis: 
+            for ui in self.scene_to_ui.values(): 
+                node = ui.get_node_by_tag(tag)
+                if node is not None: 
+                    return node 
+            return None 
+
         if self.current_scene == None: 
             return None 
+        
         return self.scene_to_ui[self.current_scene].get_node_by_tag(tag)
     
     def get_nodes_by_type(self, node_type) -> List[Node]: 
         return self.scene_to_ui[self.current_scene].get_nodes_by_type(node_type)
+
+    def get_current_ui(self): 
+        return self.scene_to_ui[self.current_scene]
     
     def clear_node_state(self): 
         if self.current_scene == None: 
@@ -603,3 +618,26 @@ class SceneManager:
         node.buffer = ''
         node.cursor_idx = 0
         return word
+    
+    def hover(self, node): 
+        # check it node can have hover state
+        if not node.hover(): 
+            return 
+
+        # change cursor type based on node
+        if isinstance(self, TextFieldNode): 
+            pg.mouse.set_cursor(pg.SYSTEM_CURSOR_IBEAM)
+        else: 
+            pg.mouse.set_cursor(pg.SYSTEM_CURSOR_HAND)
+
+        # update reference to the last hovered node
+        if node.tag != self.current_hovered: 
+            old_node = self.get_node_by_tag(self.current_hovered)
+            self.current_hovered = node.tag
+
+            if old_node is None: 
+                print(f'[ INFO ] Could not find reference to hovered node: {self.current_hovered}')
+                return
+            old_node.hovered = False
+            
+        
