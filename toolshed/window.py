@@ -10,7 +10,7 @@ class EventContext:
     mouse_pos: Tuple[float, float] = (0,0)
 
 class PygameContext: 
-    def __init__(self, base_dims, icon_path=None): 
+    def __init__(self, base_dims, title='Toolshed Window', icon_path=None, fps=60): 
         pg.init()
 
         # record the base dimensions as separate vars 
@@ -24,18 +24,16 @@ class PygameContext:
 
         # instantiate screen object 
         self.screen = pg.display.set_mode(self.scaled_dims, pg.RESIZABLE)
+        pg.display.set_caption(title)
         self.frame = pg.Surface(base_dims)
         self.clock = pg.Clock() 
+        self.fps = fps
 
         if icon_path is not None: 
-            icon_surf = None
             try: 
-                icon_surf = pg.image.load(icon_path)
+                pg.display.set_icon(pg.image.load(icon_path).convert_alpha())
             except: 
-                print(f'[ INFO ] Failed to load icon image at path: {icon_path}')
-            
-            if icon_surf is not None:
-                pg.display.set_icon(icon_surf)
+                print(f'[ INFO ] Failed to load and set icon image at path: {icon_path}')
 
     def quit(self): 
         pg.quit()
@@ -48,7 +46,7 @@ class PygameContext:
         self.screen.fill((0,0,0))
         self.screen.blit(scaled_frame, ((sw-fw)/2, (sh-fh)/2))
         pg.display.update()
-        self.clock.tick(60)
+        self.clock.tick(self.fps)
 
     def get_scaled_mouse_pos(self): 
         mx, my = pg.mouse.get_pos()
