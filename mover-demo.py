@@ -22,14 +22,28 @@ def draw_posmover_rect(mover: PosMover, surf: pg.Surface):
     pg.draw.rect(surf, (0,0,255), pg.Rect(mover.pos[0], mover.pos[1], 16, 16))
     pg.draw.rect(surf, (255,255,255), pg.Rect(mover.pos[0], mover.pos[1], 16, 16), width=1)
 
+def draw_posmover_red_rect(mover: PosMover, surf: pg.Surface): 
+    pg.draw.rect(surf, (255,0,0), pg.Rect(mover.pos[0], mover.pos[1], 16, 16))
+    pg.draw.rect(surf, (255,255,255), pg.Rect(mover.pos[0], mover.pos[1], 16, 16), width=1)
+
 class App: 
     def __init__(self): 
         icon = 'assets/icon.png'
         self.pc = PygameContext((WIDTH, HEIGHT), 'Mover Demo', icon)
         self.running = True
 
-        self.mover = PosMover((50,50), draw_posmover_rect, ease_in_out_cubic)
-
+        self.mover = PosMover((50,50), draw_posmover_rect, ease_in_out_cubic, retain_path=False)
+        
+        self.border_mover = PosMover((0,0), draw_posmover_rect, ease_out_quint, retain_path=True, loop=True)
+        for pos in [ (WIDTH-16, 0), (WIDTH-16, HEIGHT-16), (0, HEIGHT-16), (0,0) ]: 
+            self.border_mover.add_to_path(pos) 
+        self.border_mover.start_animating()
+    
+        self.fast_mover = PosMover((16, 16), draw_posmover_red_rect, ease_out_quint, animation_frames=30, loop=True, retain_path=True)
+        for pos in [ (WIDTH-16*2, 16), (WIDTH-16*2, HEIGHT-16*2), (16, HEIGHT-16*2), (16,16) ]: 
+            self.fast_mover.add_to_path(pos) 
+        self.fast_mover.start_animating()
+        
     def run(self): 
         try: 
             while self.running: 
@@ -39,7 +53,6 @@ class App:
         except KeyboardInterrupt: 
             log.info('KeyboardInterrupt recorded... exiting now') 
         except Exception as ex: 
-            tb = ex.__traceback__
             log.error(f'Error encounted in main game loop', ex) 
 
         pg.quit()
@@ -48,10 +61,14 @@ class App:
     def draw(self): 
         self.pc.frame.fill((50,50,50))
         self.mover.draw(self.pc.frame)
+        self.border_mover.draw(self.pc.frame)
+        self.fast_mover.draw(self.pc.frame)
         self.pc.finish_drawing_frame()
         
     def update(self): 
         self.mover.update() 
+        self.border_mover.update()
+        self.fast_mover.update()
          
     def handle_event(self): 
         mx, my = self.pc.get_event_context().mouse_pos
@@ -64,14 +81,15 @@ class App:
                     self.running = False 
 
                 if event.key == pg.K_SPACE: 
-                    if self.mover.easing_fn == ease_in_out_cubic: 
-                        self.mover.easing_fn = ease_out_quint
-                    else: 
-                        self.mover.easing_fn = ease_in_out_cubic
+                    try: 
+                        self.fast_mover.start_animating()
+                    except: 
+                        pass 
 
             elif event.type == pg.MOUSEBUTTONDOWN: 
                 # print(f'Mouse clicked at ({mx:.{2}f}, {my:.{2}f})')
-                self.mover.start_animating((mx, my))
+                self.mover.add_to_path((mx, my))
+                self.mover.start_animating()
 
 def main(): 
     app = App()

@@ -8,16 +8,18 @@ def ease_in_out_cubic(x):
     return 4 * x**3 if x < 0.5 else 1 - (-2 * x + 2)**3 / 2
 
 class Mover: 
-    def __init__(self, draw_fn, easing_fn, animation_frames=60): 
+    def __init__(self, draw_fn, easing_fn, animation_frames=60, active=True): 
         self.draw_fn = draw_fn
         self.easing_fn = easing_fn
         
         self.animating = False
-        self.animation_frames = 60
+        self.animation_frames = animation_frames
         self.frames = 0 
 
+        self.active = active
+
     def update(self): 
-        if not self.animating: 
+        if not self.animating or not self.active: 
             return 
         
         self.frames += 1
@@ -28,6 +30,12 @@ class Mover:
         return self.easing_fn(self.frames / self.animation_frames) if self.animating else None
 
     def start_animating(self): 
+        if self.animating: 
+            raise Exception('Already animating mover... failed to start animating')
+        
+        if not self.active:
+            raise Exception('Animation cannot start in Mover because it\'s not active')
+        
         self.animating = True
         self.frames = 0 
 
@@ -36,33 +44,68 @@ class Mover:
         self.frames = 0  
 
     def draw(self, surf): 
+        if not self.active: 
+            return 
         self.draw_fn(self, surf)
 
 class PosMover(Mover): 
-    def __init__(self, pos, draw_fn, easing_fn, animation_frames=60): 
+    def __init__(self, pos, draw_fn, easing_fn, animation_frames=60, retain_path=True, loop=False): 
         super().__init__(draw_fn, easing_fn, animation_frames)
-        self.pos = pos 
-        self.target = None 
+        self.pos = pos  
         self.animating_start_pos = None
+        self.retain_path = retain_path
+        self.loop = loop 
+        self.path = []
+        self.target_idx = None 
 
     def update(self): 
-        if self.animating: 
-            y = self.get_easing_value()
-            self.pos = (
-                (self.target[0] - self.animating_start_pos[0]) * y + self.animating_start_pos[0], 
-                (self.target[1] - self.animating_start_pos[1]) * y + self.animating_start_pos[1]
-            ) 
+        if not self.active or not self.animating: 
+            return 
+        
+        target = self.get_current_target()
+        y = self.get_easing_value()
+        self.pos = (
+            (target[0] - self.animating_start_pos[0]) * y + self.animating_start_pos[0], 
+            (target[1] - self.animating_start_pos[1]) * y + self.animating_start_pos[1]
+        ) 
         super().update()
 
-    def start_animating(self, target):
-        super().start_animating()
-        self.target = target 
+    def get_current_target(self): 
+        return (
+            self.path[self.target_idx] 
+            if self.target_idx is not None and self.target_idx < len(self.path)
+            else None
+        )
+
+    def start_animating(self):
+        try: 
+            super().start_animating()
+        except: 
+            print(f'[ ERROR ] Failed to start animation of Mover')
+
+        if self.target_idx is None: 
+            self.target_idx = 0 
         self.animating_start_pos = self.pos  
 
     def stop_animating(self):
         super().stop_animating()
-        self.target = None 
-        self.animating_start_pos = None 
+
+        # check if target is at the end of its path... continue animating if not
+        self.target_idx += 1
+        if self.loop: 
+            self.target_idx %= len(self.path)
+
+        if self.target_idx < len(self.path): 
+            self.start_animating()
+
+        else:  
+            self.target_idx = None
+            self.animating_start_pos = None 
+            if not self.retain_path: 
+                self.path.clear()        
+
+    def add_to_path(self, target): 
+        self.path.append(target) 
     
 class Animation: 
     current_sprite_idx: int | None
