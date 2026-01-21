@@ -32,7 +32,7 @@ class Logger:
                     filename = filename[len(self.root)+1:]
                 message += f'Line: {frame.tb_lineno} -- {frame.tb_frame.f_code.co_name}() -- {filename}\n'
                 frame = frame.tb_next
-                message = message[:-1]
+            message = message[:-1]
         self.log(self.Level.ERROR, message) 
 
     def log(self, level, input_msg): 
