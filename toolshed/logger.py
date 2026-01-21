@@ -1,4 +1,4 @@
-from pathlib import Path
+import os
 
 class Logger: 
     class Level: 
@@ -6,8 +6,12 @@ class Logger:
         INFO = 'INFO'
         ERROR = 'ERROR'
 
-    def __init__(self, root: Path): 
-        self.root = root.__str__()
+    def __init__(self): 
+        env = os.environ
+        self.root = None
+        if 'PYGAME_TOOLSHED_LOGGER_ROOT' in env.keys(): 
+            self.root = env.get('PYGAME_TOOLSHED_LOGGER_ROOT')
+            self.debug(f'Logger initialized with root: {self.root}')
 
     def prefix(self, level): 
         return f'[ {level} ] '
@@ -18,16 +22,18 @@ class Logger:
     def info(self, message): 
         self.log(self.Level.INFO, message)  
 
-    def error(self, message, ex: Exception): 
-        message += f': {ex}\n'
-        frame = ex.__traceback__
-        while frame is not None: 
-            filename = frame.tb_frame.f_code.co_filename
-            if filename.startswith(self.root): 
-                filename = filename[len(self.root)+1:]
-            message += f'Line: {frame.tb_lineno} -- {frame.tb_frame.f_code.co_name} -- {filename}\n'
-            frame = frame.tb_next
-        self.log(self.Level.ERROR, message[:-1]) 
+    def error(self, message, ex: Exception = None): 
+        if ex is not None: 
+            message += f': {ex}\n'
+            frame = ex.__traceback__
+            while frame is not None: 
+                filename = frame.tb_frame.f_code.co_filename
+                if self.root is not None and filename.startswith(self.root): 
+                    filename = filename[len(self.root)+1:]
+                message += f'Line: {frame.tb_lineno} -- {frame.tb_frame.f_code.co_name}() -- {filename}\n'
+                frame = frame.tb_next
+                message = message[:-1]
+        self.log(self.Level.ERROR, message) 
 
     def log(self, level, input_msg): 
         prefix = self.prefix(level)

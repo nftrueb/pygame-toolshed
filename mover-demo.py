@@ -3,13 +3,13 @@ from pathlib import Path
 
 import pygame as pg
 
+from toolshed import get_logger
 from toolshed.window import PygameContext
-from toolshed.logger import Logger
 from toolshed.orchestration import PosMover, ease_in_out_cubic, ease_out_quint, ease_in_quint
 
 WIDTH, HEIGHT = 320, 180
 
-log = Logger(Path(__file__).resolve().parent)
+logger = get_logger()
 
 # easing functions have a graph of some y value between an x value of 0 and 1
 # x value should always be time ... define an animation event in terms of x frames or millis 
@@ -50,10 +50,11 @@ class App:
                 self.handle_event()
                 self.update()
                 self.draw()
+                self.fast_mover += 1
         except KeyboardInterrupt: 
-            log.info('KeyboardInterrupt recorded... exiting now') 
+            logger.info('KeyboardInterrupt recorded... exiting now') 
         except Exception as ex: 
-            log.error(f'Error encounted in main game loop', ex) 
+            logger.error(f'Error encounted in main game loop', ex) 
 
         pg.quit()
         print('Successfully exited program ...') 

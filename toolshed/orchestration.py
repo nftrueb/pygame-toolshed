@@ -1,3 +1,7 @@
+from . import get_logger
+
+logger = get_logger()
+
 def ease_in_quint(x): 
     return x**5
 
@@ -81,7 +85,7 @@ class PosMover(Mover):
         try: 
             super().start_animating()
         except: 
-            print(f'[ ERROR ] Failed to start animation of Mover')
+            logger.error('Failed to start animation of Mover')
 
         if self.target_idx is None: 
             self.target_idx = 0 
