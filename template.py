@@ -1,33 +1,36 @@
+import asyncio
+
 import pygame as pg
 
+from toolshed import get_logger
 from toolshed.window import PygameContext
-from toolshed.logger import Logger
 
 WIDTH, HEIGHT = 320, 180
 
-log = Logger()
+logger = get_logger()
 
 class App: 
     def __init__(self): 
-        icon = 'assets/icon.png'
-        self.pc = PygameContext((WIDTH, HEIGHT), icon)
+        self.pc = PygameContext((WIDTH, HEIGHT), 'Pygbag Template')
         self.running = True
 
-    def run(self): 
+    async def run(self): 
         try: 
             while self.running: 
                 self.handle_event()
                 self.draw()
+                await asyncio.sleep(0)
         except KeyboardInterrupt: 
-            log.info('KeyboardInterrupt recorded... exiting now') 
+            logger.info('KeyboardInterrupt recorded... exiting now') 
         except Exception as ex: 
-            log.error(f'Error encounted in main game loop: {ex}') 
+            logger.error(f'Error encounted in main game loop', ex) 
 
         pg.quit()
         print('Successfully exited program ...') 
 
     def draw(self): 
         self.pc.frame.fill((255,255,255))
+        pg.draw.rect(self.pc.frame, (0,0,255), pg.Rect(50,50,50,50))
         self.pc.finish_drawing_frame()
 
     def handle_event(self): 
@@ -41,11 +44,7 @@ class App:
                     self.running = False 
 
             elif event.type == pg.MOUSEBUTTONUP: 
-                print(f'Mouse clicked at ({mx:.{2}f}, {my:.{2}f})')
-
-def main(): 
-    app = App()
-    app.run()
+                logger.debug(f'Mouse clicked at ({mx:.{2}f}, {my:.{2}f})')
 
 if __name__ == '__main__': 
-    main()
+    asyncio.run(App().run())
