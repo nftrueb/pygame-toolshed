@@ -20,7 +20,7 @@ class Node:
     active: bool = True
     debug: bool = False
     z_idx: int = 0
-    sound: pg.Sound | None = None
+    # sound: pg.Sound | None = None
 
     def __repr__(self): 
         s = f'Node(tag={self.tag}  bounds={self.bounds}  children=[\n'
@@ -38,8 +38,8 @@ class Node:
         if self.hoverable and not self.hovered and self.active: 
             self.hovered = True 
 
-            if self.sound: 
-                self.sound.play()
+            # if self.sound: 
+            #     self.sound.play()
 
             return True 
         return False
@@ -538,9 +538,10 @@ class SceneManager:
         self.clear_node_state()
 
         # set hover on node in new scene
-        node = self.get_node(mouse_pos)
-        if node is not None:
-            node.hover()
+        if new_scene is not None:
+            node = self.get_node(mouse_pos)
+            if node is not None:
+                node.hover()
 
         # remove focus
         self.remove_focus_from_text_fields()
@@ -576,8 +577,8 @@ class SceneManager:
         return self.scene_to_ui[self.current_scene]
     
     def clear_node_state(self): 
-        if self.current_scene == None: 
-            return 
+        if self.current_scene is None or self.current_scene not in self.scene_to_ui: 
+            return
         for node in self.scene_to_ui[self.current_scene].root.children: 
             node.hovered = False
             if isinstance(node, SingleChoiceNode): 
@@ -586,6 +587,8 @@ class SceneManager:
         pg.mouse.set_cursor(pg.SYSTEM_CURSOR_ARROW)
 
     def remove_focus_from_text_fields(self, exception: str=None): 
+        if self.current_scene is None or self.current_scene not in self.scene_to_ui: 
+            return
         for node in self.get_nodes_by_type(TextFieldNode): 
             if node.tag == exception: 
                 continue 
@@ -601,6 +604,8 @@ class SceneManager:
         return None
 
     def close_popout_nodes(self): 
+        if self.current_scene is None or self.current_scene not in self.scene_to_ui: 
+            return 
         for node in self.get_nodes_by_type(PopoutNode): 
             if node.expanded:
                 node.toggle_expand()

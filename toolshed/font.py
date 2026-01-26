@@ -30,19 +30,28 @@ class FontSpriteWriter:
 		
 		self.font_offset = {}
 		for i in range(10): 
-			self.font_offset[str(i)] = (i*sprite_w, 8)
+			self.font_offset[str(i)] = (i*sprite_w, sprite_h)
 
 		for i in range(26): 
 			self.font_offset[chr(i+65)] = (sprite_w * i, 0)
 
-		self.font_offset[' '] = (80, 8)
-		self.font_offset['.'] = (88, 8)
-		self.font_offset[':'] = (136, 8)
-		self.font_offset['/'] = (144, 8)
-		self.font_offset['-'] = (152, 8)
-		self.font_offset['*'] = (160, 8)
-		self.font_offset['['] = (168, 8)
-		self.font_offset[']'] = (176, 8)
+		self.font_offset[' '] = (10 * sprite_w, sprite_h)
+		self.font_offset['.'] = (11 * sprite_w, sprite_h)
+		self.font_offset[','] = (12 * sprite_w, sprite_h)
+		self.font_offset['%'] = (14 * sprite_w, sprite_h)
+		self.font_offset['!'] = (15 * sprite_w, sprite_h)
+		self.font_offset['?'] = (16 * sprite_w, sprite_h)
+		self.font_offset[':'] = (17 * sprite_w, sprite_h)
+		self.font_offset['/'] = (18 * sprite_w, sprite_h)
+		self.font_offset['-'] = (19 * sprite_w, sprite_h)
+		self.font_offset['*'] = (20 * sprite_w, sprite_h)
+		self.font_offset['['] = (21 * sprite_w, sprite_h)
+		self.font_offset[']'] = (22 * sprite_w, sprite_h)
+		self.font_offset['<'] = (23 * sprite_w, sprite_h)
+		self.font_offset['>'] = (24 * sprite_w, sprite_h)
+
+		self.font_offset['('] = (21 * sprite_w, sprite_h)
+		self.font_offset[')'] = (22 * sprite_w, sprite_h)
 
 	def __repr__(self): 
 		s = '' 
