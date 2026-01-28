@@ -1,0 +1,66 @@
+import asyncio
+
+import pygame as pg
+
+from toolshed import get_logger
+from toolshed.window import PygameContext
+from toolshed.particles import ParticleManager
+from toolshed.mouse import Mouse
+
+WIDTH, HEIGHT = 320, 180
+
+logger = get_logger()
+
+def custom_handler(mouse: Mouse): 
+    mouse.trail_particles = not mouse.trail_particles 
+
+class App: 
+    def __init__(self): 
+        self.pc = PygameContext((WIDTH, HEIGHT), 'Mouse Demo')
+        self.pm = ParticleManager()
+        self.running = True
+
+        self.mouse = Mouse(color=(200,200,200), rad=3, weight=1, click_particles=True, mouse_pressed_event_handler=custom_handler)
+
+    async def run(self): 
+        try: 
+            while self.running: 
+                self.handle_event()
+                self.draw()
+                self.update()
+                await asyncio.sleep(0)
+        except KeyboardInterrupt: 
+            logger.info('KeyboardInterrupt recorded... exiting now') 
+        except Exception as ex: 
+            logger.error(f'Error encounted in main game loop', ex) 
+
+        pg.quit()
+        print('Successfully exited program ...') 
+
+    def draw(self): 
+        mx, my = self.pc.get_event_context().mouse_pos
+        self.pc.frame.fill((255,255,255))
+        self.pm.draw(self.pc.frame)
+        self.mouse.draw(self.pc.frame)
+        self.pc.finish_drawing_frame()
+
+    def update(self): 
+        self.mouse.update(self.pc)
+        self.pm.update()
+
+    def handle_event(self): 
+        mx, my = self.pc.get_event_context().mouse_pos
+        for event in pg.event.get(): 
+            self.mouse.handle_event(event, self.pm)
+            if event.type == pg.QUIT: 
+                self.running = False 
+
+            elif event.type == pg.KEYUP: 
+                if event.key == pg.K_ESCAPE: 
+                    self.running = False 
+
+            elif event.type == pg.MOUSEBUTTONUP: 
+                logger.debug(f'Mouse clicked at ({mx:.{2}f}, {my:.{2}f})')
+
+if __name__ == '__main__': 
+    asyncio.run(App().run())
