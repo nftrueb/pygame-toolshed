@@ -1,38 +1,46 @@
+from dataclasses import dataclass
+from typing import Tuple, Callable
+
 import pygame as pg 
+
+from . import get_logger
 from .window import PygameContext
 from .particles import ParticleManager, PulseParticle
 from .vector import Vector
 
+logger = get_logger()
+
+@dataclass
 class Mouse: 
-    def __init__(self, 
-                 color=(50,50,50), 
-                 rad=8, 
-                 weight=2, 
-                 click_particles=True, 
-                 trail_particles=False, 
-                 mouse_pressed_event_handler=None): 
-        self.x, self.y = 0, 0
-        self.color = color 
-        self.rad = rad 
-        self.weight = weight
-        self.click_particles = click_particles
-        self.trail_particles = trail_particles
-        self.mouse_pressed_event_handler = mouse_pressed_event_handler
-        self.pressed = False
+    rad: int 
+    x: float = 0
+    y: float = 0
+    outline_color: Tuple[int, int, int] = (50,50,50)
+    fill_color: Tuple[int, int, int] = (50,50,50)
+    particles_color: Tuple[int, int, int] = (50,50,50)
+    weight: int = 1
+    click_particles: bool = False
+    trail_particles: bool = False
+    mouse_pressed_event_handler: Callable = None
+    pressed: bool = False 
+    particle_timer: int = 15
 
-        self.timer = 15
-
+    def init(self):
         pg.mouse.set_visible(False)
+        logger.info('Initialized custom cursor and set mouse visible to FALSE')
 
     def pos(self): 
         return self.x, self.y
 
     def draw(self, surf): 
-        w = 0 if self.pressed else self.weight
-        pg.draw.circle(surf, self.color, self.pos(), self.rad, w)
+        if self.pressed: 
+            pg.draw.circle(surf, self.fill_color, self.pos(), self.rad)
+        pg.draw.circle(surf, self.outline_color, self.pos(), self.rad, self.weight)
 
     def update(self, pc: PygameContext): 
         self.x, self.y = pc.get_event_context().mouse_pos
+        if pg.mouse.get_visible(): 
+            pg.mouse.set_visible(False)
 
     def handle_event(self, event: pg.Event, pm: ParticleManager | None = None ): 
         rad = self.rad 
@@ -52,16 +60,16 @@ class Mouse:
             rad *= 0.5
             make_particle = self.trail_particles
 
-        if make_particle: 
-            if pm is not None: 
-                pm.add_particle(
-                    PulseParticle(
-                        Vector(self.x, self.y), 
-                        Vector(0,0), 
-                        self.timer, 
-                        color=self.color, 
-                        rad = rad
-                    )
+        if make_particle and pm is not None: 
+            pm.add_particle(
+                PulseParticle(
+                    Vector(self.x, self.y), 
+                    Vector(0,0), 
+                    self.particle_timer, 
+                    color=self.particles_color, 
+                    rad = rad
                 )
-            else: 
-                logger.info('Indicated mouse to create particles but did not provide ParticleManager') 
+            )
+
+def toggle_mouse_trail(mouse: Mouse): 
+    mouse.trail_particles = not mouse.trail_particles 
