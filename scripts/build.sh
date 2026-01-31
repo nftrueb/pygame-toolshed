@@ -1,5 +1,5 @@
-APPNAME="Compendium"
-MAIN_SCRIPT="src/compendium.py"
+APPNAME="Snowball Effect"
+MAIN_SCRIPT="src/main.py"
 ICON="assets/icon-1024.icns"
 
 ./venv/bin/pyinstaller --windowed \
@@ -8,12 +8,12 @@ ICON="assets/icon-1024.icns"
     --add-data ./assets/*.png:./assets \
     --optimize 1 \
     --icon $ICON \
-    --name $APPNAME \
+    --name "$APPNAME" \
     $MAIN_SCRIPT
 
-rm -rf /Applications/$APPNAME.app
-cp -r dist/$APPNAME.app /Applications/
+rm -rf /Applications/"$APPNAME".app
+cp -r dist/"$APPNAME".app /Applications/
 
-ln -s /Applications/$APPNAME.app ~/Desktop/$APPNAME
+ln -s /Applications/"$APPNAME".app ~/Desktop/"$APPNAME"
 
-echo "Successfully updated $APPNAME.app in /Applications"
+echo "Successfully updated "$APPNAME".app in /Applications"

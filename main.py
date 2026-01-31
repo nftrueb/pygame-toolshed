@@ -13,7 +13,7 @@ logger = get_logger()
 
 class App: 
     def __init__(self): 
-        self.pc = PygameContext((WIDTH, HEIGHT), 'Template - Change this Title')
+        self.pc = PygameContext((WIDTH, HEIGHT), 'Template - Change this Title', icon_path='./assets/icon.png')
         self.pm = ParticleManager()
         self.running = True
 
