@@ -12,8 +12,7 @@ def ease_in_out_cubic(x):
     return 4 * x**3 if x < 0.5 else 1 - (-2 * x + 2)**3 / 2
 
 class Mover: 
-    def __init__(self, draw_fn, easing_fn, animation_frames=60, active=True): 
-        self.draw_fn = draw_fn
+    def __init__(self, easing_fn, animation_frames=60, active=True): 
         self.easing_fn = easing_fn
         
         self.animating = False
@@ -47,14 +46,9 @@ class Mover:
         self.animating = False
         self.frames = 0  
 
-    def draw(self, surf): 
-        if not self.active: 
-            return 
-        self.draw_fn(self, surf)
-
 class PosMover(Mover): 
-    def __init__(self, pos, draw_fn, easing_fn, animation_frames=60, retain_path=True, loop=False): 
-        super().__init__(draw_fn, easing_fn, animation_frames)
+    def __init__(self, pos, easing_fn, animation_frames=60, retain_path=True, loop=False): 
+        super().__init__(easing_fn, animation_frames)
         self.pos = pos  
         self.animating_start_pos = None
         self.retain_path = retain_path

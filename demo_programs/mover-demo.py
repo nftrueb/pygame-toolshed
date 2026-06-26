@@ -11,6 +11,10 @@ WIDTH, HEIGHT = 320, 180
 
 logger = get_logger()
 
+BOX_W, BOX_H = WIDTH * .9, HEIGHT * .9
+BOX_X, BOX_Y = (WIDTH - BOX_W ) / 2, (HEIGHT - BOX_H) / 2
+box = pg.Rect(BOX_X, BOX_Y, BOX_W, BOX_H)
+
 # easing functions have a graph of some y value between an x value of 0 and 1
 # x value should always be time ... define an animation event in terms of x frames or millis 
 # y value can be mapped to behavior such as position, size, transparency
@@ -18,11 +22,11 @@ logger = get_logger()
 # use that value in easing function to get corresponding y value 
 # use that value in whatever application has been chosen 
 
-def draw_posmover_rect(mover: PosMover, surf: pg.Surface): 
+def draw_blue(mover: PosMover, surf: pg.Surface): 
     pg.draw.rect(surf, (0,0,255), pg.Rect(mover.pos[0], mover.pos[1], 16, 16))
     pg.draw.rect(surf, (255,255,255), pg.Rect(mover.pos[0], mover.pos[1], 16, 16), width=1)
 
-def draw_posmover_red_rect(mover: PosMover, surf: pg.Surface): 
+def draw_red(mover: PosMover, surf: pg.Surface): 
     pg.draw.rect(surf, (255,0,0), pg.Rect(mover.pos[0], mover.pos[1], 16, 16))
     pg.draw.rect(surf, (255,255,255), pg.Rect(mover.pos[0], mover.pos[1], 16, 16), width=1)
 
@@ -32,17 +36,25 @@ class App:
         self.pc = PygameContext((WIDTH, HEIGHT), 'Mover Demo', icon)
         self.running = True
 
-        self.mover = PosMover((50,50), draw_posmover_rect, ease_in_out_cubic, retain_path=False)
+        self.mover = PosMover((50,50), ease_in_out_cubic, retain_path=False)
         
-        self.border_mover = PosMover((0,0), draw_posmover_rect, ease_out_quint, retain_path=True, loop=True)
+        self.border_mover = PosMover((0,0), ease_out_quint, retain_path=True, loop=True)
         for pos in [ (WIDTH-16, 0), (WIDTH-16, HEIGHT-16), (0, HEIGHT-16), (0,0) ]: 
             self.border_mover.add_to_path(pos) 
         self.border_mover.start_animating()
     
-        self.fast_mover = PosMover((16, 16), draw_posmover_red_rect, ease_out_quint, animation_frames=30, loop=True, retain_path=True)
+        self.fast_mover = PosMover((16, 16), ease_out_quint, animation_frames=30, loop=True, retain_path=True)
         for pos in [ (WIDTH-16*2, 16), (WIDTH-16*2, HEIGHT-16*2), (16, HEIGHT-16*2), (16,16) ]: 
             self.fast_mover.add_to_path(pos) 
         self.fast_mover.start_animating()
+
+        self.box = pg.Rect(WIDTH * .05 , HEIGHT * .05, WIDTH * .9, HEIGHT * .9)
+        self.box_mover = PosMover((self.box.x, self.box.y), ease_in_out_cubic, retain_path=True)
+        self.box_mover.path = [
+            (self.box.x, self.box.y), 
+            (self.box.x, -self.box.h)
+        ]
+        self.box_mover.active = True
         
     def run(self): 
         try: 
@@ -50,7 +62,6 @@ class App:
                 self.handle_event()
                 self.update()
                 self.draw()
-                self.fast_mover += 1
         except KeyboardInterrupt: 
             logger.info('KeyboardInterrupt recorded... exiting now') 
         except Exception as ex: 
@@ -61,15 +72,22 @@ class App:
 
     def draw(self): 
         self.pc.frame.fill((50,50,50))
-        self.mover.draw(self.pc.frame)
-        self.border_mover.draw(self.pc.frame)
-        self.fast_mover.draw(self.pc.frame)
+        draw_blue(self.mover, self.pc.frame)
+        draw_blue(self.border_mover, self.pc.frame) 
+        draw_red(self.fast_mover, self.pc.frame) 
+
+        # draw the box variable 
+        pos = self.box_mover.pos
+        pg.draw.rect(self.pc.frame, (0,0,0), (pos[0], pos[1], self.box.w, self.box.h))
+        pg.draw.rect(self.pc.frame, (100,100,100), self.box, width=1)
+
         self.pc.finish_drawing_frame()
         
     def update(self): 
         self.mover.update() 
         self.border_mover.update()
         self.fast_mover.update()
+        self.box_mover.update()
          
     def handle_event(self): 
         mx, my = self.pc.get_event_context().mouse_pos
@@ -83,7 +101,7 @@ class App:
 
                 if event.key == pg.K_SPACE: 
                     try: 
-                        self.fast_mover.start_animating()
+                        self.box_mover.start_animating()
                     except: 
                         pass 
 
