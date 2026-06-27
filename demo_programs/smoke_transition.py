@@ -3,7 +3,7 @@ import random
 
 import pygame as pg
 
-from toolshed import get_logger
+from toolshed import get_logger, DEFAULT_PICO8_FONT_SIZE
 from toolshed.window import PygameContext
 from toolshed.particles import ParticleManager
 from toolshed.shapes import Circle
@@ -54,6 +54,7 @@ class SmokeTransition:
 class App: 
     def __init__(self): 
         self.pc = PygameContext((WIDTH, HEIGHT), 'Transition Demo', icon_path='./assets/icon.png')
+        self.font = pg.font.Font('assets/PICO-8.ttf', size=DEFAULT_PICO8_FONT_SIZE)
         self.pm = ParticleManager()
         self.running = True
 
@@ -83,6 +84,12 @@ class App:
             False: (255, 150, 150)
         }
         self.pc.frame.fill(colors[self.state])
+
+        if self.state: 
+            text = 'Hello World'
+            w, h = self.font.size(text)
+            surf = self.font.render(text, True, (0,0,0))
+            self.pc.frame.blit(surf, (WIDTH // 2 - w // 2, HEIGHT // 2 - h // 2))
 
         if self.smoke_transition is not None: 
             self.smoke_transition.draw(self.pc.frame)
