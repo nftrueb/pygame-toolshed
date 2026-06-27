@@ -3,7 +3,7 @@ import pygame as pg
 from dataclasses import dataclass 
 from typing import Tuple
 
-from . import get_logger
+from . import get_logger, MAX_INT
 
 logger = get_logger()
 
@@ -50,6 +50,7 @@ class PygameContext:
         self.frame = pg.Surface(base_dims)
         self.clock = pg.Clock() 
         self.fps = fps
+        self.frame_counter = 0
 
         if icon_path is not None: 
             try: 
@@ -69,6 +70,7 @@ class PygameContext:
         self.screen.blit(scaled_frame, ((sw-fw)/2, (sh-fh)/2))
         pg.display.update()
         self.clock.tick(self.fps)
+        self.frame_counter = (self.frame_counter + 1) % MAX_INT
 
     def get_scaled_mouse_pos(self): 
         mx, my = pg.mouse.get_pos()

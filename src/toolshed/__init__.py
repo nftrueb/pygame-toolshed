@@ -8,3 +8,6 @@ def get_logger():
 
 class SystemType(StrEnum): 
     Darwin = auto()
+
+MAX_INT = (1 << 31) - 1
+MIN_INT = -(1 << 31)
