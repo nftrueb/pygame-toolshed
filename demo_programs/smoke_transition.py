@@ -1,12 +1,15 @@
 import asyncio
 import random
+from datetime import datetime
 
 import pygame as pg
+from PIL import Image
 
 from toolshed import get_logger, DEFAULT_PICO8_FONT_SIZE
 from toolshed.window import PygameContext
 from toolshed.particles import ParticleManager
 from toolshed.shapes import Circle
+from toolshed.gif import GifManager
 
 WIDTH, HEIGHT = 128, 128
 
@@ -14,6 +17,9 @@ logger = get_logger()
 
 class SmokeTransition: 
     def __init__(self): 
+        self.circles = []
+
+    def start_new_transition(self): 
         self.circles = [ SmokeTransition.build_circle() for _ in range(100)]
 
     def build_circle(): 
@@ -26,9 +32,6 @@ class SmokeTransition:
         return Circle(x, y, rad, color )
 
     def update(self): 
-        if len(self.circles) == 0:
-            return 
-        
         for c in self.circles: 
             # shrink rad
             if random.random() > 0.5: 
@@ -59,9 +62,8 @@ class App:
         self.running = True
 
         self.state = True
-        self.smoke_transition = None
-
-        logger.debug(f'{self.pc.base_dims} {self.pc.screen_dims}')
+        self.smoke_transition = SmokeTransition()
+        self.gif_manager = GifManager()
 
     async def run(self): 
         try: 
@@ -91,15 +93,13 @@ class App:
             surf = self.font.render(text, True, (0,0,0))
             self.pc.frame.blit(surf, (WIDTH // 2 - w // 2, HEIGHT // 2 - h // 2))
 
-        if self.smoke_transition is not None: 
-            self.smoke_transition.draw(self.pc.frame)
-
+        self.smoke_transition.draw(self.pc.frame)
         self.pm.draw(self.pc.frame)
         self.pc.finish_drawing_frame()
-
+        self.gif_manager.record(self.pc.frame)
+        
     def update(self): 
-        if self.smoke_transition is not None: 
-            self.smoke_transition.update()
+        self.smoke_transition.update()
         self.pm.update()
 
     def handle_event(self): 
@@ -114,11 +114,13 @@ class App:
 
                 elif event.key == pg.K_SPACE: 
                     self.state = not self.state
-                    self.smoke_transition = SmokeTransition()
+                    self.smoke_transition.start_new_transition()
+
+                elif event.key == pg.K_z: 
+                    self.gif_manager.toggle()
 
             elif event.type == pg.MOUSEBUTTONUP: 
                 logger.debug(f'Mouse clicked at ({mx:.{2}f}, {my:.{2}f})')
-                
 
 def main(): 
     asyncio.run(App().run())
