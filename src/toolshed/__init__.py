@@ -12,3 +12,4 @@ class SystemType(StrEnum):
 MAX_INT = (1 << 31) - 1
 MIN_INT = -(1 << 31)
 DEFAULT_PICO8_FONT_SIZE = 5
+PICO8_DIMS = (128, 128)
