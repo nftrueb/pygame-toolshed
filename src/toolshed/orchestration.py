@@ -109,7 +109,7 @@ class Animation:
     current_sprite_idx: int | None
     frame_counter: int | None
 
-    def __init__(self, sprites=None): 
+    def __init__(self, sprites=None, loop=True): 
         # holds tuples of (sprite surface, frame limit for this sprite)
         self.sprites = []
         if sprites is not None: 
@@ -117,6 +117,7 @@ class Animation:
 
         self.current_sprite_idx = None
         self.frame_counter = None
+        self.loop = loop 
 
     def play(self): 
         self.current_sprite_idx = 0 
@@ -144,9 +145,13 @@ class Animation:
             self.frame_counter = 0
 
         # reset vars and return if animation has finished
-        if self.current_sprite_idx >= len(self.sprites): 
-            self.frame_counter = None 
-            self.current_sprite_idx = None  
+        if not self.loop: 
+            if self.current_sprite_idx >= len(self.sprites): 
+                self.frame_counter = None 
+                self.current_sprite_idx = None  
+
+        else: 
+            self.current_sprite_idx %= len(self.sprites)
 
     def get_current_sprite(self): 
         if self.current_sprite_idx is None: 
