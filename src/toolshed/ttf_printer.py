@@ -68,6 +68,7 @@ class Printer:
 def init_printers(printer_params): 
     fonts = {}
     printers = {}
+    print(printer_params)
     for name, params in printer_params.items(): 
         font_params = params['font']
         if font_params['filename'] not in fonts: 
