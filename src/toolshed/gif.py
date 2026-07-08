@@ -1,4 +1,5 @@
 from datetime import datetime 
+from pathlib import Path
 
 import pygame as pg
 from PIL import Image
@@ -46,3 +47,19 @@ class GifManager:
         )
         logger.debug(f'Wrote {len(self.frames)} frames to {filename}')
         self.frames = [] # reset frames for next gif capture
+
+def capture_screenshot(surface: pg.Surface, filename: str | None = None): 
+    output_dir = Path('output')
+    if filename is None: 
+        if not output_dir.exists() or not output_dir.is_dir(): 
+            output_dir.mkdir()
+            logger.info(f'Created new directory: {output_dir.name}')
+        filename = output_dir / f'screenshot-{datetime.now()}.png'
+
+    Image.frombytes(
+        'RGB', 
+        surface.get_size(), 
+        pg.image.tobytes(surface, 'RGB')
+    ).save(filename)
+
+    logger.info(f'Saved screenshot to {filename}')

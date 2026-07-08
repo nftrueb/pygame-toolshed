@@ -54,6 +54,8 @@ class Printer:
         color = color if color is not None else self.color
         foreground_surf = self.font.render(text, True, color)
         surf.blit(foreground_surf, pos) 
+        w, h = foreground_surf.get_size()
+        return pg.Rect(pos[0], pos[1], w, h)
 
     def print_center(
             self, 
@@ -63,12 +65,12 @@ class Printer:
             color: tuple[int, int, int] | None = None
         ): 
         w, h = self.font.size(text)
-        self.print(surf, text, (pos[0] - w//2, pos[1] - h//2), color) 
+        pos = (pos[0] - w//2, pos[1] - h//2)
+        return self.print(surf, text, pos, color) 
 
 def init_printers(printer_params): 
     fonts = {}
     printers = {}
-    print(printer_params)
     for name, params in printer_params.items(): 
         font_params = params['font']
         if font_params['filename'] not in fonts: 
