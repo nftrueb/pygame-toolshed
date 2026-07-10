@@ -2,15 +2,6 @@ from . import get_logger
 
 logger = get_logger()
 
-def ease_in_quint(x): 
-    return x**5
-
-def ease_out_quint(x): 
-    return 1 - (1 - x)**5
-
-def ease_in_out_cubic(x):
-    return 4 * x**3 if x < 0.5 else 1 - (-2 * x + 2)**3 / 2
-
 class Mover: 
     def __init__(self, easing_fn, animation_frames=60, active=True): 
         self.easing_fn = easing_fn
