@@ -1,19 +1,20 @@
 [project]
-name = "toolshed"
+name = "icon-maker"
 version = "0.1.0"
-description = "Pygame graphics and game library"
+description = "Add your description here"
 readme = "README.md"
 authors = [
     { name = "nftrueb", email = "nftrueb@gmail.com" }
 ]
 requires-python = ">=3.14"
-dependencies = []
+dependencies = [
+    "pillow>=12.3.0",
+    "pygame-ce>=2.5.7",
+]
+
+[project.scripts]
+icon-maker = "icon_maker:main"
 
 [build-system]
 requires = ["uv_build>=0.11.24,<0.12.0"]
 build-backend = "uv_build"
-
-[tool.uv.workspace]
-members = [
-    "icon-maker",
-]
