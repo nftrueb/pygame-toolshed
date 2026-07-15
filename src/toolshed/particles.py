@@ -106,3 +106,9 @@ class EllipseParticle(Particle):
         self.w += self.w_inc
         self.h += self.h_inc
         
+@dataclass 
+class ImgParticle(Particle): 
+    img: pg.Surface = None
+
+    def draw(self, surf: pg.Surface): 
+        surf.blit(self.img, self.pos.unpack()) 

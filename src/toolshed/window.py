@@ -1,5 +1,6 @@
 import os
 import pygame as pg 
+from pygame.window import Window
 from dataclasses import dataclass 
 from typing import Tuple
 
@@ -45,8 +46,8 @@ class PygameContext:
         self.screen_dims = self.scaled_dims
 
         # instantiate screen object 
-        self.screen = pg.display.set_mode(self.scaled_dims, pg.RESIZABLE)
-        pg.display.set_caption(title)
+        self.window = Window(title, self.scaled_dims, resizable=True)
+        self.screen = self.window.get_surface()
         self.frame = pg.Surface(base_dims)
         self.clock = pg.Clock() 
         self.fps = fps
@@ -54,9 +55,13 @@ class PygameContext:
 
         if icon_path is not None: 
             try: 
-                pg.display.set_icon(pg.image.load(icon_path).convert_alpha())
+                # pg.display.set_icon(pg.image.load(icon_path).convert_alpha())
+                self.window.set_icon(pg.image.load(icon_path).convert_alpha())
             except: 
                 print(f'[ INFO ] Failed to load and set icon image at path: {icon_path}')
+
+        # bring focus to window if it's not fullscreen
+        self.window.focus()
     
     def quit(self): 
         pg.quit()
@@ -68,7 +73,7 @@ class PygameContext:
 
         self.screen.fill((0,0,0))
         self.screen.blit(scaled_frame, ((sw-fw)/2, (sh-fh)/2))
-        pg.display.update()
+        self.window.flip()
         self.clock.tick(self.fps)
         self.frame_counter = (self.frame_counter + 1) % MAX_INT
 
