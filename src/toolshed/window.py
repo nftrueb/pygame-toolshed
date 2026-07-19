@@ -19,50 +19,68 @@ class PygameContext:
     def __init__(self, base_dims, title='Toolshed Window', icon_path=None, fps=60, screen_info_pkg=True): 
         pg.init()
 
-        # record the base dimensions as separate vars 
-        self.base_dims = base_dims
-
-        # get monitor info and record the scale and screen dimensions
-        logger.debug(f'UNAME: {os.uname().sysname}')
-        if os.uname().sysname.startswith('Emscripten'): 
-            info = pg.display.Info()
-            self.scale = get_window_scale(base_dims, (info.current_w * .7, info.current_h))
-
-        else: 
-            import screeninfo 
-            monitors = screeninfo.get_monitors()
-            target_monitor_idx = 1 if len(monitors) > 1 else 0
-            target_monitor_dims = (monitors[target_monitor_idx].width, monitors[target_monitor_idx].height)
-            logger.info(f'Using monitor dimensions: {target_monitor_dims}')
-
-            horiz = target_monitor_dims[0] - base_dims[0]
-            vert  = target_monitor_dims[1] - base_dims[1]
-            max_scale_dims = [target_monitor_dims[0], target_monitor_dims[1]]
-            idx = 0 if horiz < vert else 1
-            max_scale_dims[idx] *= 0.7
-            self.scale = get_window_scale(base_dims, tuple(max_scale_dims))            
-
-        self.scaled_dims = (base_dims[0] * self.scale, base_dims[1] * self.scale)
-        self.screen_dims = self.scaled_dims
-
         # instantiate screen object 
-        self.window = Window(title, self.scaled_dims, resizable=True)
+        self.base_dims = base_dims
+        self.window = Window(title, self.base_dims, resizable=True)
         self.screen = self.window.get_surface()
         self.frame = pg.Surface(base_dims)
         self.clock = pg.Clock() 
         self.fps = fps
         self.frame_counter = 0
 
+        # temporary and for my setup only ... Window does not spawn on desired monitor
+        self.center_window_on_monitor(self.base_dims)
+
+        # bring focus to window if it's not fullscreen
+        self.window.focus()
+
+        # get scale based on setup info
+        self.base_dims = base_dims
+        self.scale = self.get_scale()
+        self.scaled_dims = (base_dims[0] * self.scale, base_dims[1] * self.scale)
+        self.screen_dims = self.scaled_dims
+        self.window.size = self.screen_dims
+        self.center_window_on_monitor(self.screen_dims)
+
         if icon_path is not None: 
             try: 
-                # pg.display.set_icon(pg.image.load(icon_path).convert_alpha())
                 self.window.set_icon(pg.image.load(icon_path).convert_alpha())
             except: 
                 print(f'[ INFO ] Failed to load and set icon image at path: {icon_path}')
 
-        # bring focus to window if it's not fullscreen
-        self.window.focus()
+    def get_scale(self): 
+        logger.debug(f'UNAME: {os.uname().sysname}')
+        if os.uname().sysname.startswith('Emscripten'): 
+            return self.get_scale_for_web_build()
+        return self.get_scale_from_monitor_dims()
+
+    def get_scale_for_web_build(self): 
+        info = pg.display.Info()
+        return get_window_scale(base_dims, (info.current_w * .7, info.current_h))
+        
+    def get_scale_from_monitor_dims(self):
+        import screeninfo 
+        monitors = screeninfo.get_monitors()
+        target_monitor_idx = 1 if len(monitors) > 1 else 0
+        target_monitor_dims = (monitors[target_monitor_idx].width, monitors[target_monitor_idx].height)
+        horiz = target_monitor_dims[0] - self.base_dims[0]
+        vert  = target_monitor_dims[1] - self.base_dims[1]
+        max_scale_dims = [target_monitor_dims[0], target_monitor_dims[1]]
+        idx = 0 if horiz < vert else 1
+        max_scale_dims[idx] *= 0.7
+        return get_window_scale(self.base_dims, tuple(max_scale_dims)) 
     
+    def center_window_on_monitor(self, dims): 
+        try: 
+            import screeninfo
+            monitors = screeninfo.get_monitors()
+            center = (654, -890) if len(monitors) > 1 else (monitors[0].width//2, monitors[0].height//2)
+            cx = center[0] - dims[0]//2
+            cy = center[1] - dims[1]//2
+            self.window.position = (cx, cy)
+        except: 
+            pass 
+        
     def quit(self): 
         pg.quit()
 
