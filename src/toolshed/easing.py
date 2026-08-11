@@ -1,5 +1,6 @@
+import math
 from . import get_logger
-from .time import get_current_millis
+from toolshed.time import get_current_millis
 
 logger = get_logger()
 
@@ -9,8 +10,23 @@ def ease_in_quint(x):
 def ease_out_quint(x): 
     return 1 - (1 - x)**5
 
+def ease_in_out_quint(x): 
+    return 16 * x**5 if x < 0.5 else 1 - (-2 * x + 2)**5 / 2
+# function easeInOutQuint(x: number): number {
+# return x < 0.5 ? 16 * x * x * x * x * x : 1 - Math.pow(-2 * x + 2, 5) / 2;
+# }
+
 def ease_in_out_cubic(x):
     return 4 * x**3 if x < 0.5 else 1 - (-2 * x + 2)**3 / 2
+
+def ease_cos_in_out(x): 
+    return -1 * math.cos(x * math.pi * 2)
+
+def ease_linear(x): 
+    return x
+
+def ease_noop(x):  
+    return x
 
 class EaseManager: 
     def __init__(self): 

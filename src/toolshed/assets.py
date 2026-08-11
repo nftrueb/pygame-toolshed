@@ -1,8 +1,8 @@
 import pygame as pg 
 
 class AtlasManager: 
-    def __init__(self, sprite_sheet: pg.Surface, offsets): 
-        self.sprite_sheet = sprite_sheet
+    def __init__(self, offsets): 
+        self.sprite_sheet: pg.Surface | None = None
         self.offsets = offsets 
 
     def sprite(self, id): 

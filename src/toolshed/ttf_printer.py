@@ -1,3 +1,4 @@
+from types import NoneType
 import pygame as pg 
 from pygame.font import Font
 
@@ -38,6 +39,13 @@ class Printer:
             pos: tuple[int, int], 
             color: tuple[int, int, int] | None = None
         ): 
+        if isinstance(text, NoneType): 
+            text = 'None'
+            
+        elif not isinstance(text, str): 
+            logger.error(f'Invalid text type provided to Printer.print(): {type(text)} {text}')
+            return 
+        
         w, h = self.font.size(text)
         if self.shadow_direction is not None:
             if self.shadow_direction == ShadowDirection.Outline: 
