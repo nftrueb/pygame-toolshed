@@ -77,6 +77,8 @@ class Printer:
         return self.print(surf, text, pos, color) 
 
 def init_printers(printer_params): 
+    if not pg.font.get_init(): 
+        pg.font.init()
     fonts = {}
     printers = {}
     for name, params in printer_params.items(): 
