@@ -24,28 +24,30 @@ def _get_classes_of(module):
 class ModuleData: 
     def __init__(self, module): 
         self.module = module 
-        self.st_mtime = _get_file_update_time(module.__file__)
+        self.file = module.__file__
+        self.st_mtime = _get_file_update_time(self.file)
 
 class Reloader(threading.Thread): 
     EXCLUSIONS = {'main'}
 
     def __init__(self): 
         super().__init__(daemon=True)
-        changing_modules = [ 
-            m for m in sys.modules.values() 
-            if hasattr(m, '__file__') 
-            and m.__file__.startswith('/'.join(__file__.split('/')[:-4]))
-        ]
-        self.module_to_update_time = [ ModuleData(m) for m in changing_modules ]
+        self.module_data_list = []
         self.curr_module_idx = 0
-        logger.info(f'Registered {len(self.module_to_update_time)} modules in the Reloader')
+        self.prev_sys_modules_length = 0
+        self.check_for_new_modules()
+
+    def start(self): 
+        logger.info('Reloader starting ....')
+        super().start()
 
     def run(self):
         now = time.time()
         while True: 
-            target = self.module_to_update_time[self.curr_module_idx]
-            st_mtime = _get_file_update_time(target.module.__file__)
+            target = self.module_data_list[self.curr_module_idx]
+            st_mtime = _get_file_update_time(target.file)
             if st_mtime != target.st_mtime: 
+                print(f'updating {target.module.__name__}')
                 try: 
                     # get references to all classes in module 
                     old_classes = _get_classes_of(target.module)
@@ -74,14 +76,34 @@ class Reloader(threading.Thread):
                     target.st_mtime = st_mtime
 
             # increment idx to change watched file for the next step
-            self.curr_module_idx = (self.curr_module_idx + 1) % len(self.module_to_update_time)
+            self.curr_module_idx = (self.curr_module_idx + 1) % len(self.module_data_list)
 
             # delay before checking the next module ... each module is checked once a second
-            time.sleep(1 / len(self.module_to_update_time))
+            time.sleep(1 / len(self.module_data_list))
+
+            # check for new modules after each cycle
+            if self.curr_module_idx == 0: 
+                self.check_for_new_modules()
 
             if time.time() - now > 5: 
                 logger.debug('Reloader still running .... ')
                 now = time.time()
 
-reloader = Reloader()
-reloader.start()
+    def check_for_new_modules(self): 
+        modules = sys.modules.values()
+        if len(modules) == self.prev_sys_modules_length: 
+            return 
+        self.prev_sys_modules_length = len(modules)
+        
+        modules_to_watch = [ 
+            m for m in sys.modules.values() 
+            if hasattr(m, '__file__') 
+            and isinstance(m.__file__, str)
+            and m.__file__.startswith('/'.join(__file__.split('/')[:-4]))
+        ]
+        self.module_data_list = [ ModuleData(m) for m in modules_to_watch ]
+        self.curr_module_idx = 0 
+        logger.debug(f'Reloader initialized {len(self.module_data_list)} modules')
+
+# this can be anonamous since it runs fully autonamously 
+Reloader().start()
