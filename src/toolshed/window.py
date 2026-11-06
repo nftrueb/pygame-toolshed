@@ -46,7 +46,7 @@ class PygameContext:
             try: 
                 self.window.set_icon(pg.image.load(icon_path).convert_alpha())
             except: 
-                print(f'[ INFO ] Failed to load and set icon image at path: {icon_path}')
+                logger.info(f'Failed to load and set icon image at path: {icon_path}')
 
     def get_scale(self): 
         logger.debug(f'UNAME: {os.uname().sysname}')

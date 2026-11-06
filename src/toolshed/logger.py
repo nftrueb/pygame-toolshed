@@ -1,10 +1,14 @@
 import os
+import traceback
+from toolshed.text import * 
+
+class Level: 
+    DEBUG = 'DEBUG'
+    INFO = 'INFO'
+    ERROR = 'ERROR'
 
 class Logger: 
-    class Level: 
-        DEBUG = 'DEBUG'
-        INFO = 'INFO'
-        ERROR = 'ERROR'
+    PREFIX_LEN = max([ len(v) for k, v in Level.__dict__.items() if not k.startswith('__')]) 
 
     def __init__(self): 
         env = os.environ
@@ -14,29 +18,31 @@ class Logger:
             self.debug(f'Logger initialized with root: {self.root}')
 
     def prefix(self, level): 
-        return f'[ {level} ] '
+        s = f'[ {level}'
+        s += ''.join([ ' ' for _ in range(Logger.PREFIX_LEN - len(level) )])
+        s += ' ] '
+        return red(s) if level == Level.ERROR else s
 
     def debug(self, message): 
-        self.log(self.Level.DEBUG, message)  
+        self.log(Level.DEBUG, message)  
 
     def info(self, message): 
-        self.log(self.Level.INFO, message)  
+        self.log(Level.INFO, message)  
 
-    def error(self, message, ex: Exception = None): 
+    def error(self, message, ex: BaseException = None): 
+        message = red(bold(message))
         if ex is not None: 
-            message += f': {ex}\n'
-            frame = ex.__traceback__
-            while frame is not None: 
-                filename = frame.tb_frame.f_code.co_filename
-                if self.root is not None and filename.startswith(self.root): 
-                    filename = filename[len(self.root)+1:]
-                message += f'Line: {frame.tb_lineno} -- {frame.tb_frame.f_code.co_name}() -- {filename}\n'
-                frame = frame.tb_next
+            message += ':' + bold(f'\n{ex.__class__.__name__}: {ex}\n')
+            for frame in reversed(traceback.extract_tb(ex.__traceback__)): 
+                segments = frame.filename.split('/')
+                message += f'  {'/'.join(segments[:-1])}/'
+                message += bold(f'{segments[-1]}::{frame.lineno}')
+                message += '\n'
             message = message[:-1]
-        self.log(self.Level.ERROR, message) 
+        self.log(Level.ERROR, message) 
 
     def log(self, level, input_msg): 
-        prefix = self.prefix(level)
-        whitespace_prefix = '\n' + ''.join([' ' for i in range(len(prefix))])
+        prefix = bold(self.prefix(level))
+        whitespace_prefix = '\n' + ''.join([' ' for _ in range(len_stripped(prefix))])
         constructed_msg = whitespace_prefix.join(input_msg.split('\n'))
         print(f'{prefix}{constructed_msg}')
