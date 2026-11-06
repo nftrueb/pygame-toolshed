@@ -33,11 +33,12 @@ class Logger:
         message = red(bold(message))
         if ex is not None: 
             message += ':' + bold(f'\n{ex.__class__.__name__}: {ex}\n')
+            first_frame = True
             for frame in reversed(traceback.extract_tb(ex.__traceback__)): 
-                segments = frame.filename.split('/')
-                message += f'  {'/'.join(segments[:-1])}/'
-                message += bold(f'{segments[-1]}::{frame.lineno}')
+                frame_line = f'  {frame.filename}::{frame.lineno}'
+                message += bold(frame_line) if first_frame else frame_line
                 message += '\n'
+                first_frame = False
             message = message[:-1]
         self.log(Level.ERROR, message) 
 
