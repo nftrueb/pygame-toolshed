@@ -3,12 +3,10 @@ from typing import Tuple, Callable
 
 import pygame as pg 
 
-from . import get_logger
+from .logger import logger
 from .window import PygameContext
 from .particles import ParticleManager, PulseParticle
 from .vector import Vector
-
-logger = get_logger()
 
 @dataclass
 class Mouse: 

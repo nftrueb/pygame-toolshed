@@ -1,8 +1,6 @@
 import math
-from . import get_logger
+from toolshed.logger import logger
 from toolshed.time import get_current_millis
-
-logger = get_logger()
 
 def ease_in_quint(x): 
     return x**5

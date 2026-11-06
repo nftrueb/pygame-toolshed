@@ -4,9 +4,8 @@ from pygame.window import Window
 from dataclasses import dataclass 
 from typing import Tuple
 
-from . import get_logger, MAX_INT
-
-logger = get_logger()
+from toolshed import MAX_INT
+from toolshed.logger import logger
 
 def get_window_scale(base_size, scaled_size):
         return min(scaled_size[0] // base_size[0], scaled_size[1] // base_size[1])

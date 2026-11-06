@@ -2,9 +2,7 @@ from types import NoneType
 import pygame as pg 
 from pygame.font import Font
 
-from toolshed import get_logger
-
-logger = get_logger()
+from toolshed.logger import logger
 
 class ShadowDirection: 
     Left = 'Left'

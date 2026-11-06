@@ -1,21 +1,14 @@
-import os
 import traceback
 from toolshed.text import * 
+from toolshed.singleton import Singleton
 
 class Level: 
     DEBUG = 'DEBUG'
     INFO = 'INFO'
     ERROR = 'ERROR'
 
-class Logger: 
+class Logger(Singleton): 
     PREFIX_LEN = max([ len(v) for k, v in Level.__dict__.items() if not k.startswith('__')]) 
-
-    def __init__(self): 
-        env = os.environ
-        self.root = None
-        if 'PYGAME_TOOLSHED_LOGGER_ROOT' in env.keys(): 
-            self.root = env.get('PYGAME_TOOLSHED_LOGGER_ROOT')
-            self.debug(f'Logger initialized with root: {self.root}')
 
     def prefix(self, level): 
         s = f'[ {level}'
@@ -47,3 +40,5 @@ class Logger:
         whitespace_prefix = '\n' + ''.join([' ' for _ in range(len_stripped(prefix))])
         constructed_msg = whitespace_prefix.join(input_msg.split('\n'))
         print(f'{prefix}{constructed_msg}')
+
+logger = Logger()

@@ -1,4 +1,3 @@
-from pathlib import Path 
 import os 
 import importlib
 import sys
@@ -8,9 +7,7 @@ import threading
 import atexit
 import time
 
-from toolshed import get_logger
-
-logger = get_logger()
+from toolshed.logger import logger
 
 def _get_file_update_time(file): 
     return os.stat(file).st_mtime 
