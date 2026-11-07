@@ -1,4 +1,5 @@
 import threading
+import _thread
 from toolshed.logger import logger
 from toolshed.time import get_current_millis
 
@@ -25,7 +26,6 @@ class ToolshedThread(threading.Thread):
         self.class_name = self.__class__.__name__
         self.thread_event = threading.Event()
         self.start_time = None 
-        logger.info(f'{self.class_name} thread starting ...') 
 
     def __lt__(self, other: ToolshedThread): 
         return self.start_time < other.start_time 
@@ -50,3 +50,30 @@ class ToolshedThread(threading.Thread):
 #     def run(self): 
 #         while not self.thread_event.is_set(): 
 #             pass 
+
+class ToolshedThreadPool(ToolshedThread): 
+    THREAD_NAME = 'ToolshedThreadPool'
+    def __init__(self, thread_type: type): 
+        super().__init__(name=ToolshedThreadPool.THREAD_NAME)
+        if issubclass(thread_type, ToolshedThread): 
+            self.thread_type = thread_type
+            self.thread: ToolshedThread = None
+        else: 
+            logger.error('Must create ToolshedThreadPool with a subclass of ToolshedThread')
+            raise Exception('Must create ToolshedThreadPool with a subclass of ToolshedThread')
+
+    def run(self): 
+        while not self.thread_event.is_set(): 
+            self.watch_thread()
+        self.thread.kill()
+
+    def watch_thread(self): 
+        self.thread = self.thread_type()
+        self.thread.start()
+        while not self.thread_event.is_set() and not self.thread.thread_event.is_set(): 
+            threads = get_threads()
+            if len(threads) > 6: 
+                message = f'Too many threads running ({len(threads)}) ... check toolshed.reload'
+                message += '\n'.join([str(t) for t in threads])
+                logger.error(message)
+                _thread.interrupt_main()

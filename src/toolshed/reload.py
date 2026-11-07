@@ -5,9 +5,10 @@ import inspect
 import gc
 import time
 import types
+import ast
 
 from toolshed.logger import logger
-from toolshed.threads import ToolshedThread, consolidate_threads, get_threads_by_name
+from toolshed.threads import ToolshedThread, ToolshedThreadPool, consolidate_threads
 
 def _get_file_update_time(file): 
     return os.stat(file).st_mtime 
@@ -18,10 +19,20 @@ def _get_classes_of(module):
         if (inspect.isclass(cls) and cls.__module__ == module.__name__) or type(cls) == type
     }
 
+def _compile_python(filename: str): 
+    try: 
+        with open(filename, 'r') as f: 
+            contents = f.read() 
+        ast.parse(contents)
+        return True
+    except Exception as ex: 
+        pass 
+    return False 
+
 class ModuleData: 
     def __init__(self, module: types.ModuleType): 
         self.module = module 
-        self.name = module.__name__
+        self.name = module.__name__ 
         self.file = module.__file__
         self.st_mtime = _get_file_update_time(self.file)
 
@@ -35,55 +46,67 @@ class Reloader(ToolshedThread):
         self.curr_module_idx = 0
         self.prev_sys_modules_length = 0
         self.check_for_new_modules()
+        self.log_timer = 0 
 
     def run(self):
-        now = time.time()
-        while not self.thread_event.is_set(): 
-            target = self.module_data_list[self.curr_module_idx]
-            st_mtime = _get_file_update_time(target.file)
-            if st_mtime != target.st_mtime: 
-                try: 
-                    # get references to all classes in module 
-                    old_classes = _get_classes_of(target.module)
+        try: 
+            while not self.thread_event.is_set(): 
+                self.watch_loop()
+        except Exception as ex: 
+            logger.error('Fatal exception occurred in Reloader thread', ex) 
 
-                    # reload module 
-                    importlib.reload(target.module)
+    def watch_loop(self):  
+        target = self.module_data_list[self.curr_module_idx]
+        st_mtime = _get_file_update_time(target.file)
+        if st_mtime != target.st_mtime: 
+            try: 
+                self.attempt_module_reload(target)
+            finally: 
+                # reset update time
+                target.st_mtime = st_mtime
 
-                    if target.name == 'toolshed.reload': 
-                        consolidate_threads(self.name)
+        # increment idx to change watched file for the next step
+        self.curr_module_idx = (self.curr_module_idx + 1) % len(self.module_data_list)
 
-                    # set map of old references to new references
-                    new_classes =  _get_classes_of(target.module)
-                    class_transition_map = {
-                        old: new_classes[name] for name, old in old_classes.items()
-                    }
-                    
-                    # loop over objects and reassign __class__ to the new ref
-                    for obj in gc.get_objects(): 
-                        if type(obj) in class_transition_map.keys(): 
-                            obj.__class__ = class_transition_map[type(obj)]
-                        elif type(obj) == type and obj in class_transition_map: 
-                            obj = class_transition_map[obj]
+        # delay before checking the next module ... each module is checked once a second
+        time.sleep(1 / len(self.module_data_list))
 
-                    logger.info(f'{target.module.__name__} successfully reloaded')
+        # check for new modules after each cycle
+        if self.curr_module_idx == 0:
+            self.check_for_new_modules()
 
-                finally: 
-                    # reset update time
-                    target.st_mtime = st_mtime
+        # debug log on timer
+        now = time.time() 
+        if now - self.log_timer > Reloader.LOG_TIMER: 
+            # logger.debug('Reloader still running ....')
+            self.log_timer = now
 
-            # increment idx to change watched file for the next step
-            self.curr_module_idx = (self.curr_module_idx + 1) % len(self.module_data_list)
+    def attempt_module_reload(self, target: ModuleData): 
+        # get references to all classes in module 
+        old_classes = _get_classes_of(target.module)
 
-            # delay before checking the next module ... each module is checked once a second
-            time.sleep(1 / len(self.module_data_list))
+        # check that file has valid python syntax 
+        if _compile_python(target.file): 
 
-            # check for new modules after each cycle
-            if self.curr_module_idx == 0: 
-                self.check_for_new_modules()
+            # reload module 
+            importlib.reload(target.module)
 
-            if time.time() - now > Reloader.LOG_TIMER: 
-                logger.debug('Reloader still running .... ')
-                now = time.time()
+            # set map of old references to new references
+            new_classes =  _get_classes_of(target.module)
+            class_transition_map = {
+                old: new_classes[name] for name, old in old_classes.items()
+            }
+            
+            # loop over objects and reassign __class__ to the new ref
+            for obj in gc.get_objects(): 
+                if type(obj) in class_transition_map.keys(): 
+                    obj.__class__ = class_transition_map[type(obj)]
+                elif type(obj) == type and obj in class_transition_map: 
+                    obj = class_transition_map[obj]
+
+            logger.info(f'{target.module.__name__} successfully reloaded')
+        else: 
+            logger.debug(f'Tried to reload {target.name} but source didn\'t compile')
 
     def check_for_new_modules(self): 
         modules = sys.modules.values()
@@ -101,5 +124,6 @@ class Reloader(ToolshedThread):
         self.curr_module_idx = 0 
         logger.debug(f'Reloader initialized {len(self.module_data_list)} modules')
 
-# this can be anonamous since it runs fully autonamously 
-Reloader().start()
+pool = ToolshedThreadPool(Reloader) 
+pool.start()
+consolidate_threads(ToolshedThreadPool.THREAD_NAME)
