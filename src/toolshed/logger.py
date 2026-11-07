@@ -35,10 +35,11 @@ class Logger(Singleton):
             message = message[:-1]
         self.log(Level.ERROR, message) 
 
-    def log(self, level, input_msg): 
+    def log(self, level, input_msg):
+        s = str(input_msg)
         prefix = bold(self.prefix(level))
         whitespace_prefix = '\n' + ''.join([' ' for _ in range(len_stripped(prefix))])
-        constructed_msg = whitespace_prefix.join(input_msg.split('\n'))
+        constructed_msg = whitespace_prefix.join(s.split('\n'))
         print(f'{prefix}{constructed_msg}')
 
 logger = Logger()

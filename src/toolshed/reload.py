@@ -3,11 +3,11 @@ import importlib
 import sys
 import inspect
 import gc
-import threading
-import atexit
 import time
+import types
 
 from toolshed.logger import logger
+from toolshed.threads import ToolshedThread, consolidate_threads, get_threads_by_name
 
 def _get_file_update_time(file): 
     return os.stat(file).st_mtime 
@@ -19,38 +19,38 @@ def _get_classes_of(module):
     }
 
 class ModuleData: 
-    def __init__(self, module): 
+    def __init__(self, module: types.ModuleType): 
         self.module = module 
+        self.name = module.__name__
         self.file = module.__file__
         self.st_mtime = _get_file_update_time(self.file)
 
-class Reloader(threading.Thread): 
-    EXCLUSIONS = {'main'}
+class Reloader(ToolshedThread): 
+    LOG_TIMER = 10
+    THREAD_NAME = 'reloader'
 
     def __init__(self): 
-        super().__init__(daemon=True)
+        super().__init__(name=Reloader.THREAD_NAME)
         self.module_data_list = []
         self.curr_module_idx = 0
         self.prev_sys_modules_length = 0
         self.check_for_new_modules()
 
-    def start(self): 
-        logger.info('Reloader starting ....')
-        super().start()
-
     def run(self):
         now = time.time()
-        while True: 
+        while not self.thread_event.is_set(): 
             target = self.module_data_list[self.curr_module_idx]
             st_mtime = _get_file_update_time(target.file)
             if st_mtime != target.st_mtime: 
-                print(f'updating {target.module.__name__}')
                 try: 
                     # get references to all classes in module 
                     old_classes = _get_classes_of(target.module)
 
                     # reload module 
                     importlib.reload(target.module)
+
+                    if target.name == 'toolshed.reload': 
+                        consolidate_threads(self.name)
 
                     # set map of old references to new references
                     new_classes =  _get_classes_of(target.module)
@@ -62,7 +62,6 @@ class Reloader(threading.Thread):
                     for obj in gc.get_objects(): 
                         if type(obj) in class_transition_map.keys(): 
                             obj.__class__ = class_transition_map[type(obj)]
-                            print(f'Matched ' + str(obj))
                         elif type(obj) == type and obj in class_transition_map: 
                             obj = class_transition_map[obj]
 
@@ -82,7 +81,7 @@ class Reloader(threading.Thread):
             if self.curr_module_idx == 0: 
                 self.check_for_new_modules()
 
-            if time.time() - now > 5: 
+            if time.time() - now > Reloader.LOG_TIMER: 
                 logger.debug('Reloader still running .... ')
                 now = time.time()
 
