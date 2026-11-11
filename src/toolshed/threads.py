@@ -1,6 +1,7 @@
 import threading
 import _thread
-from toolshed.logger import logger
+import time
+from toolshed import logger
 from toolshed.time import get_current_millis
 
 def get_threads() -> list[ToolshedThread]:
@@ -70,7 +71,8 @@ class ToolshedThreadPool(ToolshedThread):
     def watch_thread(self): 
         self.thread = self.thread_type()
         self.thread.start()
-        while not self.thread_event.is_set() and not self.thread.thread_event.is_set(): 
+        while not self.thread_event.is_set() and not self.thread.thread_event.is_set():  
+            time.sleep(1)
             threads = get_threads()
             if len(threads) > 6: 
                 message = f'Too many threads running ({len(threads)}) ... check toolshed.reload'

@@ -1,14 +1,40 @@
 from enum import StrEnum, auto
+import sys
+from collections.abc import Callable 
+from toolshed.loggerlib import Logger
+from toolshed.singleton import Singleton
+
+logger = Logger() 
 
 class SystemType(StrEnum): 
     Darwin = auto()
 
-MAX_INT = (1 << 31) - 1
-MIN_INT = -(1 << 31)
-DEFAULT_PICO8_FONT_SIZE = 5
-PICO8_DIMS = (128, 128)
+class ToolshedContext(Singleton):  
+    def __init__(self): 
+        # define the project root path to perform path operations regardless of current directory
+        segments = __file__.split('/')[:-4]
+        segments.append('')
+        self.project_dir = '/'.join(segments)
 
+        # define current OS 
+        self.platform = SystemType(sys.platform)
 
+        # app details 
+        self.appname = ''
+        self.title = ''
+        self.root_dir_name = ''
+
+    def __str__(self): 
+        s  = f'ToolshedContext(\n'
+        s += f'  project_dir={self.project_dir}\n'
+        s += f'  platform={self.platform}\n'
+        s += f')'
+        return s
+    
+    def get_root_dir(self): 
+        return f'{self.project_dir}{self.root_dir_name}/'
+
+# Classes to be moved to color.py
 class Color: 
     def __init__(self, name: str, value: tuple[int, int, int]): 
         self.name = name
@@ -31,3 +57,24 @@ class PICO_COLORS:
     Indigo = Color('Indigo',  (131, 118, 156))
     Pink = Color('Pink',  (255, 119, 168))
     Peach = Color('Peach',  (255, 204, 170))
+
+# Helpers
+def attempt(fn: Callable, *args, print_exception=False): 
+    try: 
+        fn(*args)
+    except BaseException as ex: 
+        if print_exception: 
+            logger.error(f'Exception when attempting {fn.__name__}', ex)
+
+# Singletons
+logger = Logger()
+toolshed_context = ToolshedContext()
+logger.debug(toolshed_context) 
+print(logger)
+# sys.exit()
+
+# Constants
+MAX_INT = (1 << 31) - 1
+MIN_INT = -(1 << 31)
+DEFAULT_PICO8_FONT_SIZE = 5
+PICO8_DIMS = (128, 128)

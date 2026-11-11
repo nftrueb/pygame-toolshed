@@ -4,8 +4,7 @@ from pygame.window import Window
 from dataclasses import dataclass 
 from typing import Tuple
 
-from toolshed import MAX_INT
-from toolshed.logger import logger
+from toolshed import MAX_INT, logger
 
 def get_window_scale(base_size, scaled_size):
         return min(scaled_size[0] // base_size[0], scaled_size[1] // base_size[1])
@@ -15,7 +14,14 @@ class EventContext:
     mouse_pos: Tuple[float, float] = (0,0)
 
 class PygameContext: 
-    def __init__(self, base_dims, title='Toolshed Window', icon_path=None, fps=60, screen_info_pkg=True): 
+    def __init__(
+            self, 
+            base_dims, 
+            title='Toolshed Window', 
+            icon_path='./assets/icon.png', 
+            fps=60, 
+            screen_info_pkg=True
+        ): 
         pg.init()
 
         # instantiate screen object 

@@ -1,4 +1,4 @@
-from toolshed.logger import logger
+from toolshed import logger
 
 class Mover: 
     def __init__(self, easing_fn, animation_frames=60, active=True): 

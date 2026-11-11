@@ -7,7 +7,7 @@ import time
 import types
 import ast
 
-from toolshed.logger import logger
+from toolshed import logger
 from toolshed.threads import ToolshedThread, ToolshedThreadPool, consolidate_threads
 
 def _get_file_update_time(file): 
