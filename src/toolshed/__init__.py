@@ -69,9 +69,6 @@ def attempt(fn: Callable, *args, print_exception=False):
 # Singletons
 logger = Logger()
 toolshed_context = ToolshedContext()
-logger.debug(toolshed_context) 
-print(logger)
-# sys.exit()
 
 # Constants
 MAX_INT = (1 << 31) - 1

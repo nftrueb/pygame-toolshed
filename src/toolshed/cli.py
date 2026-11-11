@@ -51,15 +51,3 @@ class CLI:
             sys.exit()
 
         return flags
-    
-def init_cli() -> CLI: 
-    return (
-        CLI('CLI for building new Toolshed projects')
-        .option(name='--name', description='name of project folder')
-        .option(name='--root', description='path that project folder will be made in')
-    ) 
-
-
-cli = init_cli()
-print(cli.parse())
-sys.exit()
