@@ -15,7 +15,11 @@ class Logger(Singleton):
         s = f'[ {level}'
         s += ''.join([ ' ' for _ in range(Logger.PREFIX_LEN - len(level) )])
         s += ' ] '
-        return red(s) if level == Level.ERROR else s
+        if level == Level.ERROR: 
+            s = red(s)
+        elif level == Level.TODO: 
+            s = blue(s) 
+        return s
 
     def debug(self, message): 
         self.log(Level.DEBUG, message)  
@@ -37,24 +41,16 @@ class Logger(Singleton):
         self.log(Level.ERROR, message) 
 
     def todo(self, message): 
-        self.log(Level.TODO, message)
+        self.log(Level.TODO, bold(blue(message)))
 
     def log(self, level, input_msg):
         # input message can be any object ... must cast to string first
         s = str(input_msg)
-
-        # prefix is usually bold but "TODO" level can make it blue too
         prefix = bold(self.prefix(level))
-        if level == Level.TODO: 
-            prefix = blue(prefix)
-
+    
         # construct a white space string so that multi-line messages can be left aligned
         whitespace_prefix = '\n' + ''.join([' ' for _ in range(len_stripped(prefix))])
         formatted_message = whitespace_prefix.join(s.split('\n'))
-
-        # make the message blue too if "TODO" level
-        if level == Level.TODO: 
-            formatted_message = bold(blue(formatted_message))
 
         # print final prefix and message
         print(f'{prefix}{formatted_message}')
