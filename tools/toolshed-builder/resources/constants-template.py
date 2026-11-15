@@ -3,9 +3,9 @@ from toolshed import PICO_COLORS, DEFAULT_PICO8_FONT_SIZE, PICO8_DIMS
 from toolshed.ttf_printer import init_printers
 
 # setup ToolshedContext object
-toolshed_context.appname = '"PROJECT_APP_NAME"'
-toolshed_context.title = '"PROJECT_TITLE"'
-toolshed_context.root_dir_name = '"PROJECT_ROOT_NAME"'
+toolshed_context.appname = '{{PROJECT_APP_NAME}}'
+toolshed_context.title = '{{PROJECT_TITLE}}'
+toolshed_context.root_dir_name = '{{PROJECT_ROOT_NAME}}'
 
 printer_params = {
     'regular': {

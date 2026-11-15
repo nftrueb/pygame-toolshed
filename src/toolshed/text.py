@@ -20,6 +20,7 @@ RESET = '\033[0m'
 BOLD = '1'
 RED = '31'
 GREEN = '32'
+BLUE = '34'
 WHITE = '37'
 
 def len_stripped(s: str): 
@@ -43,9 +44,12 @@ def green(s: str):
 def white(s: str): 
     return encode_effect(s, WHITE) 
 
+def blue(s: str): 
+    return encode_effect(s, BLUE)
+
 def remove_prefix(s: str, prefix: str) -> str: 
-    get_logger().info(f'toolshed.text.remove_prefix')
     if s.startswith(prefix): 
         return ''.join(s.split(prefix)[1:])
     get_logger().info(f'toolshed.text.remove_prefix: Tried to remove {prefix} from {s}')
     return s
+

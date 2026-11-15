@@ -10,7 +10,7 @@ from toolshed.text import *
 from toolshed.profiling import save_profile_stats
 from toolshed.ttf_printer import Printer
 import toolshed.reload
-import "PROJECT_APP_NAME".constants as c
+import {{PROJECT_APP_NAME}}.constants as c
 
 class App: 
     def __init__(self): 

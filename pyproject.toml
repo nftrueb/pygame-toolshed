@@ -7,7 +7,9 @@ authors = [
     { name = "nftrueb", email = "nftrueb@gmail.com" }
 ]
 requires-python = ">=3.14"
-dependencies = []
+dependencies = [
+    "pyperclip>=1.11.0",
+]
 
 [build-system]
 requires = ["uv_build>=0.11.24,<0.12.0"]
@@ -16,4 +18,6 @@ build-backend = "uv_build"
 [tool.uv.workspace]
 members = [
     "icon-maker",
+    "tools/toolshed-builder",
+    ".",
 ]

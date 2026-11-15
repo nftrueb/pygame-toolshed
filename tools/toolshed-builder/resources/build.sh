@@ -1,11 +1,16 @@
-APPNAME="Snowball Effect"
-MAIN_SCRIPT="src/main.py"
-ICON="assets/icon-1024.icns"
+#! /bin/sh
 
-./venv/bin/pyinstaller --windowed \
+APPNAME="{{APPNAME}}"
+MAIN_SCRIPT="src/{{PROJECT_NAME}}/main.py"
+ICON="assets/icon.icns"
+
+.venv/bin/pyinstaller \
+    --windowed \
     --noconfirm \
     --clean \
     --add-data ./assets/*.png:./assets \
+    --add-data ./assets/*.icns:./assets \
+    --add-data ./assets/*.ttf:./assets \
     --optimize 1 \
     --icon $ICON \
     --name "$APPNAME" \
