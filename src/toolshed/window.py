@@ -1,13 +1,14 @@
-import os
-import pygame as pg 
-from pygame.window import Window
 from dataclasses import dataclass 
 from typing import Tuple
+import pygame as pg 
+from pygame.window import Window
+from toolshed import MAX_INT, logger, toolshed_context
 
-from toolshed import MAX_INT, logger
+if toolshed_context.is_desktop_version(): 
+    import screeninfo
 
 def get_window_scale(base_size, scaled_size):
-        return min(scaled_size[0] // base_size[0], scaled_size[1] // base_size[1])
+    return min(scaled_size[0] // base_size[0], scaled_size[1] // base_size[1])
 
 @dataclass
 class EventContext:
@@ -19,8 +20,7 @@ class PygameContext:
             base_dims, 
             title='Toolshed Window', 
             icon_path='./assets/icon.png', 
-            fps=60, 
-            screen_info_pkg=True
+            fps=60
         ): 
         pg.init()
 
@@ -33,19 +33,15 @@ class PygameContext:
         self.fps = fps
         self.frame_counter = 0
 
-        # temporary and for my setup only ... Window does not spawn on desired monitor
-        self.center_window_on_monitor(self.base_dims)
-
-        # bring focus to window if it's not fullscreen
-        self.window.focus()
-
         # get scale based on setup info
-        self.base_dims = base_dims
         self.scale = self.get_scale()
         self.scaled_dims = (base_dims[0] * self.scale, base_dims[1] * self.scale)
         self.screen_dims = self.scaled_dims
         self.window.size = self.screen_dims
-        self.center_window_on_monitor(self.screen_dims)
+
+        if toolshed_context.is_desktop_version(): 
+            self.window.focus()
+            self.center_window_on_monitor(self.screen_dims)
 
         if icon_path is not None: 
             try: 
@@ -54,17 +50,25 @@ class PygameContext:
                 logger.info(f'Failed to load and set icon image at path: {icon_path}')
 
     def get_scale(self): 
-        logger.debug(f'UNAME: {os.uname().sysname}')
-        if os.uname().sysname.startswith('Emscripten'): 
+        logger.debug(f'PLATFORM: {toolshed_context.platform}')
+        if toolshed_context.is_web_version(): 
             return self.get_scale_for_web_build()
         return self.get_scale_from_monitor_dims()
 
     def get_scale_for_web_build(self): 
+        # this block was used when info returned base dims and there were aliasing problems ...
+        # now it is miraculously resolved and info is providing x2 scale so I am commenting 
+        # this out for the time being
+        if False: 
+            import platform 
+            canvas = platform.window.canvas
+            canvas.style.imageRendering = "pixelated"
+            return get_window_scale(self.base_dims, (canvas.width * .7, canvas.height))
+        
         info = pg.display.Info()
-        return get_window_scale(base_dims, (info.current_w * .7, info.current_h))
+        return get_window_scale(self.base_dims, (info.current_w * .7, info.current_h))
         
     def get_scale_from_monitor_dims(self):
-        import screeninfo 
         monitors = screeninfo.get_monitors()
         target_monitor_idx = 1 if len(monitors) > 1 else 0
         target_monitor_dims = (monitors[target_monitor_idx].width, monitors[target_monitor_idx].height)
@@ -76,15 +80,12 @@ class PygameContext:
         return get_window_scale(self.base_dims, tuple(max_scale_dims)) 
     
     def center_window_on_monitor(self, dims): 
-        try: 
-            import screeninfo
-            monitors = screeninfo.get_monitors()
-            center = (654, -890) if len(monitors) > 1 else (monitors[0].width//2, monitors[0].height//2)
-            cx = center[0] - dims[0]//2
-            cy = center[1] - dims[1]//2
-            self.window.position = (cx, cy)
-        except: 
-            pass 
+        monitors = screeninfo.get_monitors()
+        center = (654, -890) if len(monitors) > 1 else (monitors[0].width//2, monitors[0].height//2)
+        logger.todo('toolshed/window.py::center_window_on -> fix this magic number')
+        cx = center[0] - dims[0]//2
+        cy = center[1] - dims[1]//2
+        self.window.position = (cx, cy)
         
     def quit(self): 
         pg.quit()
