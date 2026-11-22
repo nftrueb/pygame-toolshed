@@ -8,7 +8,7 @@ toolshed_context.title = '{{PROJECT_TITLE}}'
 toolshed_context.root_dir_name = '{{PROJECT_ROOT_NAME}}'
 
 printer_params = {
-    'regular': {
+    'p8': {
         'font': {
             'filename': 'assets/PICO-8.ttf',
             'size': DEFAULT_PICO8_FONT_SIZE
@@ -18,4 +18,5 @@ printer_params = {
 }
 printers = init_printers(printer_params)
 
+# Constants
 WIDTH, HEIGHT = PICO8_DIMS

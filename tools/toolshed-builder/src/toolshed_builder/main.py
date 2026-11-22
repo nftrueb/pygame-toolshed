@@ -34,7 +34,7 @@ def replace_patterns_in_file(file: Path, patterns):
     logger.info(f'Finished generating {file.name}')
 
 def validate_dirs(dirs): 
-    missing_dirs = [ dir for dir in dirs.values() if not dir.exists()]
+    missing_dirs = [ str(dir) for dir in dirs.values() if not dir.exists()]
     if len(missing_dirs) > 0: 
         logger.error(f'Missing necessary directory: {'\n  - '.join(missing_dirs)}')
         sys.exit()
@@ -62,6 +62,7 @@ def build(flags):
     dirs['output'] = Path(dirs['project'] / 'output')
     dirs['scripts'] = Path(dirs['project'] / 'scripts')
     dirs['assets'] = Path(dirs['project'] / 'assets')
+    dirs['web'] = Path(dirs['project'] / 'web')
 
     # clean up old project files 
     if dirs['project'].exists(): 
@@ -69,7 +70,7 @@ def build(flags):
         clean(flags)
 
     # create new project dirs
-    make_dirs(dirs, ['project', 'output', 'scripts', 'assets'])
+    make_dirs(dirs, ['project', 'output', 'scripts', 'assets', 'web'])
     validate_dirs(dirs)
 
     # root directory must exist otherwise we cannot continue...
@@ -173,13 +174,24 @@ def build(flags):
     asset_files = [ 
         ('icon-generated.png', 'icon.png'), 
         ('icon-generated.icns', 'icon.icns'), 
-        ('PICO-8.ttf', 'PICO-8.ttf'), 
+        ('PICO-8.ttf', 'PICO-8.ttf')
     ]
     for tup in asset_files: 
         src_name, dest_name = tup
         with open(dirs['resources'] / src_name, 'rb') as src: 
             with open(dirs['project'] / 'assets' / dest_name, 'wb') as dest: 
                 dest.write(src.read())
+
+    web_main_file = Path(dirs['web'] / 'main.py')
+    with open(dirs['resources'] / 'web_main.py', 'r') as src: 
+        with open(web_main_file, 'w') as dest: 
+            dest.write(src.read())
+    replace_patterns_in_file(
+        web_main_file, 
+        patterns=[
+            ('{{PROJECT_APP_NAME}}', project_name)
+        ]
+    )
 
     # add output (and other?) files to .gitignore
     gitignore_file = Path(dirs['project'] / '.gitignore')
@@ -193,7 +205,6 @@ def build(flags):
     with open(dirs['resources'] / 'build.sh', 'r') as src: 
         with open(build_script, 'w') as dest:
             dest.write(src.read()) 
-
     replace_patterns_in_file(
         build_script, 
         patterns = [ 
@@ -201,8 +212,20 @@ def build(flags):
             ('{{PROJECT_NAME}}', project_name), 
         ]
     )
+    build_script.chmod(build_script.stat().st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
 
-    # build script +x permissions
+    # add build script for web and update executable permissions
+    build_script = Path(dirs['scripts'] / 'build-web.sh')
+    with open(dirs['resources'] / 'build-web.sh', 'r') as src: 
+        with open(build_script, 'w') as dest:
+            dest.write(src.read()) 
+    replace_patterns_in_file(
+        build_script, 
+        patterns = [ 
+            ('{{PROJECT_APP_NAME}}', project_name),
+            ('{{PROJECT_TITLE}}', title)
+        ]
+    )
     build_script.chmod(build_script.stat().st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
 
     # run build script that links shortcut on Desktop 

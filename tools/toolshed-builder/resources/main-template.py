@@ -1,25 +1,27 @@
 import asyncio
-import profiling.tracing 
 import pygame as pg
 from toolshed import PICO_COLORS, toolshed_context, logger
 from toolshed.window import PygameContext
-from toolshed.particles import ParticleManager
-from toolshed.gif import capture_screenshot, GifManager
-from toolshed.easing import EaseManager
+from toolshed.particles import ParticleManager, PulseParticle
+from toolshed.easing import EaseManager, ease_out_quint
 from toolshed.text import * 
-from toolshed.profiling import save_profile_stats
 from toolshed.ttf_printer import Printer
-import toolshed.reload
+from toolshed.vector import Vector
 import {{PROJECT_APP_NAME}}.constants as c
+
+if toolshed_context.is_desktop_version(): 
+    import profiling.tracing
+    from toolshed.profiling import save_profile_stats
+    import toolshed.reload
+    # from toolshed.gif import capture_screenshot, GifManager
 
 class App: 
     def __init__(self): 
         self.pc = PygameContext((c.WIDTH, c.HEIGHT), toolshed_context.title)
+        self.running = True
         self.pm = ParticleManager()
         self.em = EaseManager()
-        self.gm = GifManager()
-        self.printer = 'regular'
-        self.running = True
+        self.em.add('rad-change', ease_out_quint, 3000, 40, 60)
 
     async def run(self): 
         try: 
@@ -30,22 +32,34 @@ class App:
                 await asyncio.sleep(0)
         except (asyncio.CancelledError, KeyboardInterrupt): 
             logger.info('KeyboardInterrupt recorded... exiting now') 
-        except Exception as ex: 
+        except BaseException as ex: 
             logger.error(f'Error encounted in main game loop', ex) 
         finally: 
-            pg.quit() 
+            self.pc.quit()
+        logger.info(green(bold('Successfully exited program ...')))
 
     def draw(self): 
-        self.pc.frame.fill(PICO_COLORS.White.value)
-        printer: Printer = c.printers[self.printer]
-        printer.print_center(self.pc.frame, toolshed_context.appname, (c.WIDTH//2, c.HEIGHT//2))
+        printer: Printer = c.printers['p8']
+        self.pc.frame.fill(PICO_COLORS.Brown.value)
+        rad = self.em.get('rad-change')
+        pg.draw.circle(
+            self.pc.frame, 
+            PICO_COLORS.Peach.value, 
+            (c.WIDTH//2, c.HEIGHT//2), 
+            radius= 50 if rad is None else rad.get()
+        )
+        printer.print_center(
+            surf=self.pc.frame, 
+            text=toolshed_context.appname, 
+            pos=(c.WIDTH//2, c.HEIGHT//2), 
+            color=PICO_COLORS.DarkBlue.value
+        )
         self.pm.draw(self.pc.frame)
         self.pc.finish_drawing_frame()
-        self.gm.record(self.pc.frame)
 
     def update(self): 
-        self.em.update()
         self.pm.update()
+        self.em.update()
 
     def handle_event(self): 
         mx, my = self.pc.get_event_context().mouse_pos
@@ -57,24 +71,27 @@ class App:
                 if event.key == pg.K_ESCAPE: 
                     self.running = False
 
-                elif event.key == pg.K_s: 
-                    capture_screenshot(self.pc.frame) 
-
                 elif event.key == pg.K_r: 
-                    self.gm.toggle()
-                    if not self.gm.toggle: 
-                        self.gm.save()
+                    # reload program
+                    pass 
 
             elif event.type == pg.MOUSEBUTTONUP: 
+                self.pm.add_particle(
+                    PulseParticle(
+                        pos=Vector(mx, my), 
+                        vel=Vector(0,0), 
+                        timer=45, 
+                        color=PICO_COLORS.DarkBlue.value
+                    )
+                )
                 if event.button == pg.BUTTON_LEFT:
                     logger.debug(f'Mouse clicked at ({mx:.{2}f}, {my:.{2}f})')
 
 def main(): 
-    with profiling.tracing.Profile() as pr: 
-        asyncio.run(App().run())
-    save_profile_stats(pr)
-    logger.info(green(bold('Successfully exited program ...')))
+    if toolshed_context.is_desktop_version(): 
+        with profiling.tracing.Profile() as pr: 
+            asyncio.run(App().run())
+        save_profile_stats(pr)
 
-# this is not triggered if tool is installed with 'uv tool install --editable .'
-if __name__ == '__main__': 
-    main()
+    elif toolshed_context.is_web_version(): 
+        asyncio.run(App().run())
