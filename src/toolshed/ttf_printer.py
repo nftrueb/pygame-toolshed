@@ -9,7 +9,7 @@ class ShadowDirection:
     Right = 'Right', 
     Outline = 'Outline'
 
-    def get_offset(dir: ShadowDirection): 
+    def get_offset(dir): 
         if dir == ShadowDirection.Left: 
             return -1 
         elif dir == ShadowDirection.Right: 
@@ -75,6 +75,7 @@ class Printer:
         return self.print(surf, text, pos, color) 
 
 def init_printers(printer_params): 
+    logger.todo('Safely initialize printer instead of failing loudly')
     if not pg.font.get_init(): 
         pg.font.init()
     fonts = {}

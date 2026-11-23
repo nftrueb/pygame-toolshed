@@ -95,3 +95,10 @@ def main():
 
     elif toolshed_context.is_web_version(): 
         asyncio.run(App().run())
+        
+    else: 
+        logger.error(f'Running in unsupported platform: {toolshed_context.platform}')
+
+# entry point for app bundle
+if __name__ == '__main__': 
+    main()

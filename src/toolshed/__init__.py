@@ -8,6 +8,7 @@ logger = Logger()
 
 class SystemType(StrEnum): 
     Darwin = auto()
+    Emscripten = auto()
 
 class ToolshedContext(Singleton):  
     def __init__(self): 
@@ -33,7 +34,13 @@ class ToolshedContext(Singleton):
     
     def get_root_dir(self): 
         return f'{self.project_dir}{self.root_dir_name}/'
+    
+    def is_web_version(self): 
+        return self.platform == SystemType.Emscripten
 
+    def is_desktop_version(self): 
+        return self.platform == SystemType.Darwin
+    
 # Classes to be moved to color.py
 class Color: 
     def __init__(self, name: str, value: tuple[int, int, int]): 

@@ -4,7 +4,7 @@ from pathlib import Path
 import pygame as pg
 from PIL import Image
 
-from toolshed import logger
+from toolshed import logger, toolshed_context
 
 class GifManager: 
     def __init__(self, speed = 25): 

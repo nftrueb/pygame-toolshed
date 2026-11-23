@@ -35,22 +35,25 @@ class EaseManager:
             return self.eases[tag]
         return None
     
-    def add(self, tag, func, time, min_value, max_value): 
+    def add(self, tag, func, time, min_value, max_value, toggle=True): 
         if tag in self.eases: 
             logger.error(f'Ease obj already exists in EaseManager for tag: {tag}')
             return 
-        self.eases[tag] = Ease(func, time, min_value, max_value)
+        self.eases[tag] = Ease(func, time, min_value, max_value, toggle)
     
     def update(self): 
         for ease in self.eases.values(): 
             ease.update()   
+        
         self.eases = { k: v for k, v in self.eases.items() if not v.kill }
 
 class Ease: 
-    def __init__(self, func, target_time, min_value, max_value): 
+    def __init__(self, func, target_time, min_value, max_value, toggle): 
         self.func = func 
         self.target_time = target_time
         self.min_value = min_value
+        self.max_value = max_value
+        self.toggle = toggle
         self.value_range = max_value - min_value
         self.current_time = 0 
         self.prev_update_time = get_current_millis()
@@ -63,7 +66,16 @@ class Ease:
             return 
         
         if self.finished and not self.kill: 
-            self.kill = True 
+            if self.toggle: 
+                self.current_time = 0 
+                self.prev_update_time = get_current_millis()
+                self.finished = False
+                new_max = self.min_value
+                self.min_value = self.max_value
+                self.max_value = new_max
+                self.value_range = self.max_value - self.min_value
+            else: 
+                self.kill = True 
             return 
         
         self.current_time = get_current_millis() - self.prev_update_time 

@@ -11,7 +11,11 @@ from toolshed import logger
 from toolshed.threads import ToolshedThread, ToolshedThreadPool, consolidate_threads
 
 def _get_file_update_time(file): 
-    return os.stat(file).st_mtime 
+    try: 
+        return os.stat(file).st_mtime 
+    except BaseException as Ex: 
+        logger.error(f'Failed to get file update time: {file}', ex)
+    return 0
 
 def _get_classes_of(module): 
     return {
